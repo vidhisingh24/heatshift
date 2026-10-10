@@ -3,11 +3,140 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HeatShift</title>
+  <title>HeatShift: heat work plan</title>
+  <meta name="description" content="Hour-by-hour work and rest plan for outdoor workers on hot days, in English and Hindi.">
+  <meta name="theme-color" content="#1d1b18">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Devanagari:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>HeatShift</h1>
-  <p>Hour-by-hour heat work-and-rest plans for outdoor workers. Coming soon.</p>
-  <p><small>Prototype, not medical advice.</small></p>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <div class="brand">
+        <span class="brand-name">HeatShift</span>
+        <span class="brand-sub" data-t="tagline"></span>
+      </div>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en" lang="en">EN</button>
+        <button type="button" data-lang="hi" lang="hi">हिंदी</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="controls" aria-label="Choose">
+      <fieldset class="field">
+        <legend data-t="work_as"></legend>
+        <div class="roles" id="roles"></div>
+      </fieldset>
+
+      <div class="field-row">
+        <label class="field">
+          <span data-t="city"></span>
+          <select id="city"></select>
+        </label>
+        <label class="field grow">
+          <span data-t="day"></span>
+          <select id="day">
+            <option value="2024-06-18" data-t="replay_humid"></option>
+            <option value="2024-05-29" data-t="replay_dry"></option>
+            <option value="" data-t="today"></option>
+          </select>
+        </label>
+      </div>
+      <p class="note" id="replay-note" data-t="replay_note"></p>
+    </section>
+
+    <p class="loading" id="loading" aria-live="polite" hidden data-t="loading"></p>
+
+    <section class="error" id="error" hidden>
+      <p data-t="error"></p>
+      <button type="button" id="retry" data-t="retry"></button>
+    </section>
+
+    <div id="plan" hidden>
+      <section class="status" id="status" aria-live="polite">
+        <p class="status-kicker" id="status-kicker"></p>
+        <p class="status-level" id="status-level"></p>
+        <p class="status-peak" id="status-peak"></p>
+        <div class="strip" id="strip" aria-hidden="true"></div>
+        <div class="strip-axis" id="strip-axis" aria-hidden="true"></div>
+      </section>
+
+      <section class="stats">
+        <div class="stat">
+          <span class="stat-label" id="avoid-label"></span>
+          <span class="stat-value" id="avoid-value"></span>
+        </div>
+        <div class="stat">
+          <span class="stat-label" data-t="rest_hr"></span>
+          <span class="stat-value" id="rest-value"></span>
+        </div>
+        <div class="stat">
+          <span class="stat-label" data-t="water"></span>
+          <span class="stat-value" id="water-value"></span>
+        </div>
+      </section>
+
+      <section class="advice">
+        <div class="advice-head">
+          <h2 data-t="advice"></h2>
+          <button type="button" class="listen" id="listen" hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z" fill="currentColor"/></svg>
+            <span id="listen-text" data-t="listen"></span>
+          </button>
+        </div>
+        <p class="advice-text" id="message"></p>
+        <p class="advice-src" id="message-source"></p>
+      </section>
+
+      <section class="hours">
+        <div class="hours-head">
+          <h2 data-t="hourly"></h2>
+          <button type="button" class="link" id="toggle-hours" data-t="show_all"></button>
+        </div>
+        <div class="hours-cols" aria-hidden="true">
+          <span data-t="col_time"></span>
+          <span data-t="col_feels"></span>
+          <span data-t="col_do"></span>
+        </div>
+        <ol class="hour-list" id="hour-list"></ol>
+      </section>
+
+      <section class="legend">
+        <h2 data-t="legend"></h2>
+        <ul class="legend-list" id="legend-list"></ul>
+        <p class="note" data-t="legend_note"></p>
+      </section>
+
+      <section class="meta">
+        <dl>
+          <dt data-t="data"></dt>
+          <dd id="data-source"></dd>
+          <dt data-t="updated"></dt>
+          <dd id="updated"></dd>
+        </dl>
+        <p class="attribution"><a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>)</p>
+      </section>
+    </div>
+
+    <aside class="disclaimer" role="note">
+      <strong data-t="prototype"></strong>
+      <span data-t="disclaimer"></span>
+    </aside>
+  </main>
+
+  <footer class="footer wrap">
+    <span>HeatShift</span>
+    <span>·</span>
+    <a href="https://github.com/vidhisingh24/heatshift" target="_blank" rel="noopener">Source on GitHub</a>
+    <span>·</span>
+    <span data-t="footer_aws"></span>
+  </footer>
+
+  <script src="{{ url_for('static', filename='i18n.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
