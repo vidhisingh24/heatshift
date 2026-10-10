@@ -1,1 +1,3 @@
 pytest==9.1.1
+# Lets boto3 read `aws login` credentials on your laptop (the server uses its instance role instead)
+botocore[crt]==1.43.111

@@ -1,16 +1,20 @@
+import logging
 from datetime import datetime, timezone
 
 from flask import Flask, jsonify, render_template, request
 
+from heatshift.advice import get_message
 from heatshift.cities import CITIES, get_city
-from heatshift.messages import template_message
 from heatshift.profiles import PROFILES, get_profile
 from heatshift.schedule import build_schedule
-from heatshift.weather import WeatherError, get_hourly, parse_date
+from heatshift.weather import DEFAULT_REPLAY_DATE, WeatherError, get_hourly, parse_date
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 # Elastic Beanstalk's Python platform looks for a WSGI callable named `application`.
 application = Flask(__name__)
 application.json.ensure_ascii = False  # keep Hindi readable in JSON
+application.json.mimetype = "application/json; charset=utf-8"
 
 LANGS = ("en", "hi")
 ATTRIBUTION = "Weather data by Open-Meteo.com (CC BY 4.0)"
@@ -36,6 +40,7 @@ def options():
         "cities": {k: {"name_en": c["name_en"], "name_hi": c["name_hi"]} for k, c in CITIES.items()},
         "roles": {k: {"name_en": p["name_en"], "name_hi": p["name_hi"]} for k, p in PROFILES.items()},
         "langs": list(LANGS),
+        "default_replay_date": DEFAULT_REPLAY_DATE,
     })
 
 
@@ -62,6 +67,9 @@ def plan():
         return error(str(e), 503)
 
     rows, summary = build_schedule(weather["hours"], city, profile)
+    message, message_source = get_message(
+        summary, profile, city, lang, (city_key, role, lang, weather["date"], weather["mode"]),
+    )
     return jsonify({
         "city": city_key,
         "city_name": city[f"name_{lang}"],
@@ -72,8 +80,8 @@ def plan():
         "mode": weather["mode"],
         "hours": rows,
         "summary": summary,
-        "message": template_message(summary, role, lang),
-        "message_source": "template",
+        "message": message,
+        "message_source": message_source,
         "cutoffs_c": {k: v for k, v in city["hi_cutoffs_c"].items() if not k.startswith("_")},
         "data_source": weather["source"],
         "attribution": ATTRIBUTION,
