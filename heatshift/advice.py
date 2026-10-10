@@ -29,6 +29,7 @@ SYSTEM_PROMPT = """You write heat-safety advice for informal outdoor workers in 
 (street vendors, delivery riders, construction workers).
 Rules:
 - Use ONLY the facts given. Never invent temperatures, times or numbers.
+- Describe the heat level with exactly the word given (safe, caution, danger, extreme). Do not exaggerate.
 - 3 to 4 short sentences, under 70 words. Plain words a worker with little schooling understands.
 - Speak directly to the worker ("you"). Practical actions only: when to work, when to rest, water, shade.
 - No headings, no lists, no emojis, no markdown, no greeting.
@@ -54,10 +55,11 @@ def build_prompt(summary, profile, city, lang):
         f"Worst heat level today: {summary['worst_level']}",
     ]
     if summary["avoid_windows"]:
-        action = "move the stall into shade or cover it" if profile["avoid_action"] == "shade" else "stop outdoor work"
-        facts.append(f"Hours to {action}: {format_windows(summary['avoid_windows'], 'en')}")
+        action = ("keep the stall in shade or cover it" if profile["avoid_action"] == "shade"
+                  else "stop outdoor work completely (no work at all)")
+        facts.append(f"{format_windows(summary['avoid_windows'], 'en')}: {action}")
     if summary["max_rest_min"]:
-        facts.append(f"Rest in shade during hot hours: {summary['max_rest_min']} minutes every hour")
+        facts.append(f"Other hot hours: work, but rest in shade {summary['max_rest_min']} minutes every hour")
     facts.append(f"Drink a glass of water every {summary['min_water_every_min']} minutes")
     if summary["best_windows"]:
         facts.append(f"Best hours to work: {format_windows(summary['best_windows'], 'en')}")
@@ -69,13 +71,15 @@ def build_prompt(summary, profile, city, lang):
 
 def _call_bedrock(prompt, cfg):
     # Imported lazily so a missing or broken package only disables the AI message.
+    import boto3
     import botocore.config
     from strands import Agent
     from strands.models import BedrockModel
 
     model = BedrockModel(
         model_id=cfg["model_id"],
-        region_name=cfg["region"],
+        # A session with the region set, so credential refresh (e.g. `aws login`) also knows the region
+        boto_session=boto3.Session(region_name=cfg["region"]),
         streaming=False,
         max_tokens=300,
         temperature=0.3,

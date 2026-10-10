@@ -7,7 +7,8 @@ from heatshift import weather
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
+    monkeypatch.delenv("BEDROCK_MODEL_ID", raising=False)  # template text, no network calls
     weather._cache.clear()
     return application.test_client()
 
@@ -34,6 +35,23 @@ def test_plan_in_hindi(client, offline):
     body = client.get("/api/plan?role=vendor&lang=hi&date=2024-06-18").get_json()
     assert body["role_name"] == "रेहड़ी-पटरी विक्रेता"
     assert "पानी" in body["message"]
+
+
+def test_index_page_has_attribution_and_disclaimer(client):
+    html = client.get("/").get_data(as_text=True)
+    assert "Weather data by Open-Meteo.com" in html
+    assert "CC BY 4.0" in html
+    assert 'data-t="disclaimer"' in html
+
+
+def test_json_declares_utf8(client, offline):
+    r = client.get("/api/plan?lang=hi&date=2024-06-18")
+    assert "charset=utf-8" in r.headers["Content-Type"]
+
+
+def test_options_lists_roles(client):
+    body = client.get("/api/options").get_json()
+    assert set(body["roles"]) == {"vendor", "rider", "construction"}
 
 
 @pytest.mark.parametrize("query", [
