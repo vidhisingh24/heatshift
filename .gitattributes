@@ -1,0 +1,2 @@
+# Keep LF endings so Procfile and scripts work on Beanstalk's Linux hosts
+* text=auto eol=lf
