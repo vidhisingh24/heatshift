@@ -1,0 +1,16 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Deploy artifacts
+app.zip
+
+# Secrets / credentials
+.env
+.aws/
+
+# Scratch
+msg.json
