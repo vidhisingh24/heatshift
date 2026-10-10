@@ -5,6 +5,7 @@
     "lat": 28.61,
     "lon": 77.21,
     "tz": "Asia/Kolkata",
+    "utc_offset_minutes": 330,
     "hi_cutoffs_c": {
       "_source": "NWS Heat Index Chart categories (Extreme Caution 90°F, Danger 103°F, Extreme Danger 125°F) converted to °C",
       "caution": 32.2,
