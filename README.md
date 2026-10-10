@@ -27,6 +27,7 @@ Street vendors, delivery riders and construction workers cannot stay indoors. A 
 | "Heatwave alert: 44°C" | "Avoid deliveries 12:00–16:00. Rest 20 minutes every hot hour in shade. A glass of water every 20 minutes. Best hours: 05:00–08:00 and 18:00–22:00." |
 | The same warning for everyone | Different plans for heavy work (construction), moderate work (riding) and light, stationary work (vending) |
 | English text only | English or Hindi, plus a **Listen** button that reads the advice aloud |
+| Stays on one phone | A **Share on WhatsApp** button sends the day's plan to a group or co-workers |
 | Temperature only | Heat index (temperature plus humidity), with IMD heat wave rules on top |
 
 ## Screenshots
@@ -51,7 +52,9 @@ flowchart LR
 
 1. **Weather.** Hourly temperature and relative humidity for the city come from [Open-Meteo](https://open-meteo.com/), which needs no API key.
    - **Today and upcoming days** use the forecast API.
-   - **Replay** loads a real past heatwave day from the historical archive (ERA5 reanalysis). It is not heatwave season in October, so the demo replays **18 June 2024**, Delhi's highest heat-index day of 2024, and **29 May 2024**, a dry day at 46°C.
+   - **Replay** loads a real past heatwave day from the historical archive (ERA5 reanalysis). It is not heatwave season in October, so each city lists its own 2024 heatwave days in `cities.json`:
+     - **Delhi:** 18 June 2024 (highest heat index of the year) and 29 May 2024 (dry, 46°C).
+     - **Ahmedabad:** 27 May 2024 (feels like 48°C) and 23 May 2024 (dry, 46.5°C).
    - If Open-Meteo is unreachable, a bundled copy of the replay day is used and labelled on screen.
 2. **Heat index.** Calculated with the NWS heat index equation (Rothfusz regression, NWS Technical Attachment SR 90-23), including the NWS low- and high-humidity adjustments. [3]
 3. **Heat level.** See [Heat levels](#heat-levels).
@@ -145,7 +148,7 @@ It stops at the first failing step.
 
 | Param | Values |
 |---|---|
-| `city` | `delhi` |
+| `city` | `delhi`, `ahmedabad` |
 | `role` | `vendor`, `rider`, `construction` |
 | `lang` | `en`, `hi` |
 | `date` | `YYYY-MM-DD` (optional; today if empty; past dates replay from the archive; up to 15 days ahead) |
@@ -160,7 +163,13 @@ The response includes:
 
 ## Add a city
 
-Add one entry to [`data/cities.json`](data/cities.json) with the city's name in English and Hindi, latitude and longitude, timezone, UTC offset, and its own `hi_cutoffs_c` and `imd_floor_c`. No code changes are needed.
+Add one entry to [`data/cities.json`](data/cities.json). It needs:
+- the city's name in English and Hindi
+- latitude and longitude, timezone and UTC offset
+- its own `hi_cutoffs_c` and `imd_floor_c`
+- `replay_days`
+
+Optionally, save an offline copy of the first replay day in `data/samples/<city>_<date>.json`. No code changes are needed: Ahmedabad was added this way. Its cutoffs are the defaults for now; city teams would replace them with locally calibrated values.
 
 ## Project layout
 
@@ -180,7 +189,7 @@ docs/                 demo script, writeup, blog draft
 - Archive data is **ERA5 reanalysis**, a gridded model product, not a weather station. It reads a little lower than station records such as Safdarjung.
 - Profile values and thresholds are prototype values. They are not validated with workers or health experts.
 - The heat index assumes shade and light wind. Direct sun can add several degrees; this is not modelled yet.
-- One city so far (Delhi).
+- Two cities so far (Delhi, Ahmedabad), both using default thresholds.
 
 ## AI tools used
 

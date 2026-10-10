@@ -93,9 +93,52 @@
       b.setAttribute("aria-pressed", String(b.getAttribute("data-lang") === state.lang));
     });
     $("toggle-hours").textContent = state.showAll ? t("show_work") : t("show_all");
-    $("replay-note").hidden = state.date === "";
     renderRoles();
     renderCities();
+    renderDays();
+  }
+
+  function cityList() {
+    return options ? options.cities : {
+      delhi: {
+        name_en: "Delhi", name_hi: "दिल्ली",
+        replay_days: [
+          { date: "2024-06-18", label_en: "18 Jun 2024 (humid)", label_hi: "18 जून 2024 (उमस)" },
+          { date: "2024-05-29", label_en: "29 May 2024 (dry, 46°C)", label_hi: "29 मई 2024 (सूखी, 46°C)" },
+        ],
+      },
+    };
+  }
+
+  function currentCity() {
+    var cities = cityList();
+    return cities[state.city] || cities[Object.keys(cities)[0]];
+  }
+
+  function renderDays() {
+    var sel = $("day");
+    var city = currentCity();
+    sel.textContent = "";
+    var found = false;
+    (city.replay_days || []).forEach(function (d) {
+      var o = el("option", "", fill(t("replay"), { label: d["label_" + state.lang] }));
+      o.value = d.date;
+      if (d.date === state.date) found = true;
+      sel.appendChild(o);
+    });
+    var today = el("option", "", t("today"));
+    today.value = "";
+    sel.appendChild(today);
+    if (state.date === "") found = true;
+    if (!found) {  // a custom date from the URL
+      var c = el("option", "", state.date);
+      c.value = state.date;
+      sel.appendChild(c);
+    }
+    sel.value = state.date;
+    var note = $("replay-note");
+    note.hidden = state.date === "";
+    note.textContent = fill(t("replay_note"), { city: city["name_" + state.lang] });
   }
 
   function renderRoles() {
@@ -124,7 +167,7 @@
 
   function renderCities() {
     var sel = $("city");
-    var cities = options ? options.cities : { delhi: { name_en: "Delhi", name_hi: "दिल्ली" } };
+    var cities = cityList();
     sel.textContent = "";
     Object.keys(cities).forEach(function (key) {
       var o = el("option", "", cities[key]["name_" + state.lang]);
@@ -223,6 +266,7 @@
 
     renderHours(nowHour);
     renderLegend();
+    renderShare();
 
     // meta
     $("data-source").textContent = plan.data_source + " · " + t("modes")[plan.mode] + " · " + formatDate(plan.date);
@@ -285,6 +329,17 @@
     });
   }
 
+  function renderShare() {
+    var text = fill(t("share_text"), {
+      role: plan.role_name,
+      city: plan.city_name,
+      date: formatDate(plan.date),
+      message: plan.message,
+      url: location.href,
+    });
+    $("share").href = "https://wa.me/?text=" + encodeURIComponent(text);
+  }
+
   // ---------- listen (read advice aloud) ----------
 
   var synth = window.speechSynthesis;
@@ -323,20 +378,8 @@
     else if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) state.date = date;
   }
 
-  function ensureDateOption() {
-    var sel = $("day");
-    var found = Array.prototype.some.call(sel.options, function (o) { return o.value === state.date; });
-    if (!found) {
-      var o = el("option", "", state.date);
-      o.value = state.date;
-      sel.appendChild(o);
-    }
-    sel.value = state.date;
-  }
-
   function init() {
     readInitialState();
-    ensureDateOption();
     applyText();
 
     document.querySelectorAll(".lang button").forEach(function (b) {
@@ -352,12 +395,16 @@
 
     $("day").addEventListener("change", function (e) {
       state.date = e.target.value;
-      $("replay-note").hidden = state.date === "";
+      renderDays();
       load();
     });
 
     $("city").addEventListener("change", function (e) {
       state.city = e.target.value;
+      // Replay dates are per city: jump to the new city's first heatwave day
+      var days = currentCity().replay_days || [];
+      if (state.date !== "" && days.length) state.date = days[0].date;
+      renderDays();
       load();
     });
 
@@ -377,7 +424,7 @@
     fetch("/api/options")
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
-        if (data) { options = data; renderRoles(); renderCities(); }
+        if (data) { options = data; renderRoles(); renderCities(); renderDays(); }
       })
       .catch(function () { /* built-in defaults are fine */ });
 
