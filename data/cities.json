@@ -1,0 +1,20 @@
+{
+  "delhi": {
+    "name_en": "Delhi",
+    "name_hi": "दिल्ली",
+    "lat": 28.61,
+    "lon": 77.21,
+    "tz": "Asia/Kolkata",
+    "hi_cutoffs_c": {
+      "_source": "NWS Heat Index Chart categories (Extreme Caution 90°F, Danger 103°F, Extreme Danger 125°F) converted to °C",
+      "caution": 32.2,
+      "danger": 39.4,
+      "extreme": 51.7
+    },
+    "imd_floor_c": {
+      "_source": "IMD: >= 45°C heat wave (forces at least danger), >= 47°C severe heat wave (forces extreme)",
+      "danger": 45.0,
+      "extreme": 47.0
+    }
+  }
+}
