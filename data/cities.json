@@ -16,6 +16,33 @@
       "_source": "IMD: >= 45°C heat wave (forces at least danger), >= 47°C severe heat wave (forces extreme)",
       "danger": 45.0,
       "extreme": 47.0
-    }
+    },
+    "replay_days": [
+      {"date": "2024-06-18", "label_en": "18 Jun 2024 (humid)", "label_hi": "18 जून 2024 (उमस)"},
+      {"date": "2024-05-29", "label_en": "29 May 2024 (dry, 46°C)", "label_hi": "29 मई 2024 (सूखी, 46°C)"}
+    ]
+  },
+  "ahmedabad": {
+    "name_en": "Ahmedabad",
+    "name_hi": "अहमदाबाद",
+    "lat": 23.03,
+    "lon": 72.58,
+    "tz": "Asia/Kolkata",
+    "utc_offset_minutes": 330,
+    "hi_cutoffs_c": {
+      "_source": "NWS Heat Index Chart categories converted to °C (default; replace with locally calibrated values)",
+      "caution": 32.2,
+      "danger": 39.4,
+      "extreme": 51.7
+    },
+    "imd_floor_c": {
+      "_source": "IMD: >= 45°C heat wave (forces at least danger), >= 47°C severe heat wave (forces extreme)",
+      "danger": 45.0,
+      "extreme": 47.0
+    },
+    "replay_days": [
+      {"date": "2024-05-27", "label_en": "27 May 2024 (humid)", "label_hi": "27 मई 2024 (उमस)"},
+      {"date": "2024-05-23", "label_en": "23 May 2024 (dry, 46°C)", "label_hi": "23 मई 2024 (सूखी, 46°C)"}
+    ]
   }
 }

@@ -20,7 +20,6 @@ HOURLY_VARS = "temperature_2m,relative_humidity_2m"
 ARCHIVE_LAG_DAYS = 6       # archive data lags real time by about 5 days
 MAX_FORECAST_DAYS = 15
 TIMEOUT_S = 10
-DEFAULT_REPLAY_DATE = "2024-06-18"
 
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "data" / "samples"
 
@@ -42,10 +41,11 @@ def _fetch(url, params):
     return resp.json()["hourly"]
 
 
-def _sample(city_key, day):
+def _sample(city_key, city, day):
+    """Bundled copy of `day`, else of the city's first replay day."""
     path = SAMPLES_DIR / f"{city_key}_{day}.json"
-    if not path.exists():
-        path = SAMPLES_DIR / f"{city_key}_{DEFAULT_REPLAY_DATE}.json"
+    if not path.exists() and city.get("replay_days"):
+        path = SAMPLES_DIR / f"{city_key}_{city['replay_days'][0]['date']}.json"
     if not path.exists():
         return None
     with open(path, encoding="utf-8") as f:
@@ -87,7 +87,7 @@ def get_hourly(city_key, city, day=None):
             mode, source = ("forecast" if day >= today else "recent"), "Open-Meteo forecast"
         ttl = 24 * 3600 if use_archive else 30 * 60
     except (requests.RequestException, KeyError, ValueError):
-        sample = _sample(city_key, day.isoformat())
+        sample = _sample(city_key, city, day.isoformat())
         if sample is None:
             raise WeatherError("weather data unavailable")
         result_day, hourly = sample

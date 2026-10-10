@@ -54,6 +54,22 @@ def test_options_lists_roles(client):
     assert set(body["roles"]) == {"vendor", "rider", "construction"}
 
 
+def test_every_city_has_replay_days_with_bundled_samples(client):
+    cities = client.get("/api/options").get_json()["cities"]
+    assert {"delhi", "ahmedabad"} <= set(cities)
+    for key, c in cities.items():
+        assert c["replay_days"], key
+        first = c["replay_days"][0]["date"]
+        assert (weather.SAMPLES_DIR / f"{key}_{first}.json").exists(), key
+
+
+def test_second_city_offline_uses_its_own_sample(client, offline):
+    body = client.get("/api/plan?city=ahmedabad&role=construction&lang=hi&date=2024-05-27").get_json()
+    assert body["city_name"] == "अहमदाबाद"
+    assert body["mode"] == "sample"
+    assert body["date"] == "2024-05-27"
+
+
 @pytest.mark.parametrize("query", [
     "city=atlantis", "role=pilot", "lang=fr", "date=2024-13-40", "date=2099-01-01",
 ])

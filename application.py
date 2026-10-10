@@ -7,7 +7,7 @@ from heatshift.advice import get_message
 from heatshift.cities import CITIES, get_city
 from heatshift.profiles import PROFILES, get_profile
 from heatshift.schedule import build_schedule
-from heatshift.weather import DEFAULT_REPLAY_DATE, WeatherError, get_hourly, parse_date
+from heatshift.weather import WeatherError, get_hourly, parse_date
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -37,10 +37,12 @@ def health():
 @application.get("/api/options")
 def options():
     return jsonify({
-        "cities": {k: {"name_en": c["name_en"], "name_hi": c["name_hi"]} for k, c in CITIES.items()},
+        "cities": {
+            k: {"name_en": c["name_en"], "name_hi": c["name_hi"], "replay_days": c.get("replay_days", [])}
+            for k, c in CITIES.items()
+        },
         "roles": {k: {"name_en": p["name_en"], "name_hi": p["name_hi"]} for k, p in PROFILES.items()},
         "langs": list(LANGS),
-        "default_replay_date": DEFAULT_REPLAY_DATE,
     })
 
 
