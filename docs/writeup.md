@@ -22,7 +22,9 @@ HeatShift is a mobile-first web app. You pick your city, your work and your lang
 
 - A **heat level for the day** (Safe, Caution, Danger, Extreme danger) and the hottest hour.
 - **Three numbers:** hours to stop work (or move into shade), rest minutes per hot hour, and a water reminder interval.
-- **An hour-by-hour list** with a colour-coded, feels-like bar and a plain action for each hour.
+- **A shift plan** that groups the working day into blocks (work, work with breaks, stop), plus an interactive temperature chart and an hour-by-hour table.
+- **Print or save as PDF**, giving a one-page notice for a site supervisor or market board.
+- **Know the signs:** heat exhaustion vs. heat stroke, and when to call 108.
 - **A short advice message in English or Hindi**, with a Listen button that reads it aloud and a **Share on WhatsApp** button for passing the plan to co-workers.
 - **Two cities, Delhi and Ahmedabad.** Ahmedabad had India's first heat action plan. It was added with one JSON entry and no code changes.
 - **The data source, last-updated time, Open-Meteo attribution and a "prototype, not medical advice" note**, always visible.

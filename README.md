@@ -28,6 +28,9 @@ Street vendors, delivery riders and construction workers cannot stay indoors. A 
 | The same warning for everyone | Different plans for heavy work (construction), moderate work (riding) and light, stationary work (vending) |
 | English text only | English or Hindi, plus a **Listen** button that reads the advice aloud |
 | Stays on one phone | A **Share on WhatsApp** button sends the day's plan to a group or co-workers |
+| A list of numbers | A **shift plan** that groups the day into blocks (work · work with breaks · stop), plus an interactive temperature chart |
+| Nothing for the site supervisor | **Print or save as PDF** turns the plan into a one-page notice for a site or market board |
+| No first-aid guidance | **Know the signs:** heat exhaustion vs. heat stroke, and when to call 108, in English and Hindi |
 | Temperature only | Heat index (temperature plus humidity), with IMD heat wave rules on top |
 
 ## Screenshots

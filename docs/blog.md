@@ -24,7 +24,9 @@ So I built **HeatShift**. You pick your city, your work and your language, and i
 
 - A **heat level** for the day (Safe, Caution, Danger, Extreme danger) and the hottest hour.
 - Three numbers that matter: **hours to stop** (or, for vendors, to move into shade), **rest minutes per hot hour**, and **how often to drink water**.
-- An **hour-by-hour list** with a colour-coded, feels-like bar and one plain action per hour.
+- A **shift plan** that groups the working day into blocks (work normally, work with breaks, stop), with an interactive chart of feels-like and air temperature and an hour-by-hour table.
+- **Print or save as PDF**, so a contractor can pin the day's plan up at the site.
+- **Know the signs:** heat exhaustion vs. heat stroke, and when to call 108.
 - A short **advice message** written by an AI agent, plus **Listen** (read aloud) and **Share on WhatsApp**.
 - **Replay mode.** It's October, so you can replay real 2024 heatwave days in Delhi and Ahmedabad.
 
