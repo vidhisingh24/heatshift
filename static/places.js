@@ -180,7 +180,12 @@
 
   function centre() {
     var c = HS.cityList()[HS.state.city];
-    if (c && typeof c.lat === "number") search(c.lat, c.lon, false);
+    if (c && typeof c.lat === "number") return search(c.lat, c.lon, false);
+    // City list still loading (slow connection): fetch it and try again
+    fetch("/api/options").then(function (r) { return r.json(); }).then(function (o) {
+      var oc = o.cities[HS.state.city];
+      if (oc) search(oc.lat, oc.lon, false); else $("places-status").textContent = tx("error");
+    }).catch(function () { $("places-status").textContent = tx("error"); });
   }
 
   $("places-near").addEventListener("click", function () {

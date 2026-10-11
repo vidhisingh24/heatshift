@@ -121,7 +121,7 @@
   function cityList() {
     return options ? options.cities : {
       delhi: {
-        name_en: "Delhi", name_hi: "दिल्ली",
+        name_en: "Delhi", name_hi: "दिल्ली", lat: 28.6315, lon: 77.2167,
         replay_days: [
           { date: "2024-06-18", label_en: "18 Jun 2024 (humid)", label_hi: "18 जून 2024 (उमस)" },
           { date: "2024-05-29", label_en: "29 May 2024 (dry, 46°C)", label_hi: "29 मई 2024 (सूखी, 46°C)" },
