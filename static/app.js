@@ -22,7 +22,9 @@
   var NEEDS_PLAN = PAGE === "home" || PAGE === "plan";
 
   // from/to: optional work hours (-1 = not set). lat/lon: optional, kept only in this browser.
-  var state = { role: "rider", lang: "en", city: "delhi", date: "2024-06-18", from: -1, to: -1, lat: null, lon: null };
+  // date "" = today's live forecast (the default on every visit)
+  var state = { role: "rider", lang: "en", city: "delhi", date: "", from: -1, to: -1, lat: null, lon: null };
+  var FORECAST_DAYS = 4;  // today + the next 3 days
   var options = null;
   var plan = null;
   var requestId = 0;
@@ -89,8 +91,9 @@
     return out;
   }
   function saveProfile() {
+    // v2 = completed the 4-step setup (language, job, work hours, location)
     store("profile", JSON.stringify({
-      role: state.role, city: state.city, lang: state.lang, from: state.from, to: state.to, date: state.date,
+      v: 2, role: state.role, city: state.city, lang: state.lang, from: state.from, to: state.to, date: state.date,
     }));
   }
   function loadProfile() {
@@ -102,11 +105,12 @@
         if (p.city) state.city = p.city;
         if (typeof p.from === "number") state.from = p.from;
         if (typeof p.to === "number") state.to = p.to;
-        if (p.date === "" || /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) state.date = p.date;
+        // A chosen upcoming day carries across pages; anything in the past falls back to today
+        if (/^\d{4}-\d{2}-\d{2}$/.test(p.date || "") && p.date > cityToday()) state.date = p.date;
       }
       var loc = JSON.parse(recall("loc") || "null");
       if (loc && typeof loc.lat === "number") { state.lat = loc.lat; state.lon = loc.lon; }
-      return !!p;
+      return !!(p && p.v === 2);  // older profiles go through the new setup once
     } catch (e) { return false; }
   }
 
@@ -161,11 +165,13 @@
     document.dispatchEvent(new CustomEvent("hs:lang"));
   }
 
-  function hourOptions(sel, first, last, value) {
+  function hourOptions(sel, first, last, value, required) {
     sel.textContent = "";
-    var none = el("option", "", t("any_hours"));
-    none.value = "-1";
-    sel.appendChild(none);
+    if (!required) {
+      var none = el("option", "", t("any_hours"));
+      none.value = "-1";
+      sel.appendChild(none);
+    }
     for (var h = first; h <= last; h++) {
       var o = el("option", "", hhmm(h));
       o.value = String(h);
@@ -177,8 +183,22 @@
   function renderHourSelects() {
     hourOptions($("from-hour"), 0, 23, state.from);
     hourOptions($("to-hour"), 1, 24, state.to);
-    hourOptions($("setup-from"), 0, 23, state.from);
-    hourOptions($("setup-to"), 1, 24, state.to);
+    // Setup asks for work hours, so offer a sensible default shift instead of "not set"
+    hourOptions($("setup-from"), 0, 23, state.from >= 0 ? state.from : 9, true);
+    hourOptions($("setup-to"), 1, 24, state.to > 0 ? state.to : 18, true);
+  }
+
+  // ---------- setup steps ----------
+
+  function setStep(n) {
+    document.querySelectorAll(".step").forEach(function (s) {
+      s.hidden = s.getAttribute("data-step") !== String(n);
+    });
+    document.querySelectorAll("[data-dot]").forEach(function (d) {
+      var k = parseInt(d.getAttribute("data-dot"), 10);
+      d.className = k < n ? "done" : k === n ? "current" : "";
+    });
+    window.scrollTo(0, 0);
   }
 
   // ---------- first-visit setup ----------
@@ -196,7 +216,7 @@
       b.setAttribute("aria-pressed", String(key === state.role));
       b.appendChild(icon("i-" + key));
       b.appendChild(el("span", "", roles[key]["name_" + state.lang]));
-      b.addEventListener("click", function () { state.role = key; renderSetup(); });
+      b.addEventListener("click", function () { state.role = key; renderSetup(); setStep(3); });
       box.appendChild(b);
     });
     var sel = $("setup-city");
@@ -211,16 +231,27 @@
     sel.value = state.city;
   }
 
-  // "Delivery rider · Delhi · Heatwave replay: 18 Jun 2024" on pages that don't load the plan
+  // The next FORECAST_DAYS dates in the city's timezone: [{date: "YYYY-MM-DD" or "" for today, label}]
+  function forecastDays() {
+    var out = [];
+    var base = new Date(cityToday() + "T12:00:00+05:30");
+    for (var i = 0; i < FORECAST_DAYS; i++) {
+      var d = new Date(base.getTime() + i * 86400000);
+      var iso = new Intl.DateTimeFormat("en-CA", { timeZone: CITY_TZ }).format(d);
+      var label = i === 0 ? t("today") : i === 1 ? t("tomorrow")
+        : new Intl.DateTimeFormat(locale(), { weekday: "long", day: "numeric", month: "short", timeZone: CITY_TZ }).format(d);
+      out.push({ date: i === 0 ? "" : iso, label: label });
+    }
+    return out;
+  }
+
+  // "Delivery rider · Delhi · Today" on pages that don't load the plan
   function renderContext() {
     if (!has("context-line") || document.getElementById("context-line").hasAttribute("data-t")) return;
     var role = roleList()[state.role];
     var city = cityList()[state.city] || currentCity();
     var day = t("today");
-    (city.replay_days || []).forEach(function (d) {
-      if (d.date === state.date) day = fill(t("replay"), { label: d["label_" + state.lang] });
-    });
-    if (state.date && day === t("today")) day = state.date;
+    forecastDays().forEach(function (d) { if (d.date === state.date) day = d.label; });
     $("context-line").textContent = [role ? role["name_" + state.lang] : "", city["name_" + state.lang], day].join(" · ");
   }
 
@@ -235,8 +266,12 @@
     return best;
   }
 
-  function locate(statusEl, done) {
-    if (!window.isSecureContext || !navigator.geolocation) { statusEl.textContent = t("location_failed"); return; }
+  function locate(statusEl, done, failed) {
+    if (!window.isSecureContext || !navigator.geolocation) {
+      statusEl.textContent = t("location_failed");
+      if (failed) failed();
+      return;
+    }
     statusEl.textContent = t("locating");
     navigator.geolocation.getCurrentPosition(function (pos) {
       state.lat = Math.round(pos.coords.latitude * 10000) / 10000;
@@ -248,6 +283,7 @@
       if (done) done();
     }, function () {
       statusEl.textContent = t("location_failed");
+      if (failed) failed();
     }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
   }
 
@@ -288,27 +324,16 @@
 
   function renderDays() {
     var sel = $("day");
-    var city = currentCity();
     sel.textContent = "";
-    var found = state.date === "";
-    (city.replay_days || []).forEach(function (d) {
-      var o = el("option", "", fill(t("replay"), { label: d["label_" + state.lang] }));
+    var days = forecastDays();
+    if (!days.some(function (d) { return d.date === state.date; })) state.date = "";
+    days.forEach(function (d) {
+      var o = el("option", "", d.label);
       o.value = d.date;
-      if (d.date === state.date) found = true;
       sel.appendChild(o);
     });
-    var today = el("option", "", t("today"));
-    today.value = "";
-    sel.appendChild(today);
-    if (!found) {
-      var c = el("option", "", state.date);
-      c.value = state.date;
-      sel.appendChild(c);
-    }
     sel.value = state.date;
-    var note = $("replay-note");
-    note.hidden = state.date === "";
-    note.textContent = fill(t("replay_note"), { city: city["name_" + state.lang] });
+    $("replay-note").hidden = true;
   }
 
   // ---------- loading ----------
@@ -781,9 +806,9 @@
     if (ROLE_ORDER.indexOf(role) >= 0) state.role = role;
     if (lang === "en" || lang === "hi") state.lang = lang;
     if (p.get("city")) state.city = p.get("city");
-    if (date === "today") state.date = "";
-    else if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) state.date = date;
-    return saved || ROLE_ORDER.indexOf(role) >= 0;
+    // Only today or upcoming days; old links with past dates open today's forecast
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date) && date > cityToday()) state.date = date;
+    return saved;  // every visitor answers the setup questions before any page opens
   }
 
   function init() {
@@ -803,17 +828,37 @@
 
     // Setup screen
     document.querySelectorAll("[data-setup-lang]").forEach(function (b) {
-      b.addEventListener("click", function () { state.lang = b.getAttribute("data-setup-lang"); applyText(); });
+      b.addEventListener("click", function () {
+        state.lang = b.getAttribute("data-setup-lang");
+        applyText();
+        setStep(2);
+      });
+    });
+    document.querySelectorAll("[data-back]").forEach(function (b) {
+      b.addEventListener("click", function () { setStep(parseInt(b.getAttribute("data-back"), 10)); });
     });
     $("setup-city").addEventListener("change", function (e) { state.city = e.target.value; });
-    $("setup-from").addEventListener("change", function (e) { state.from = parseInt(e.target.value, 10); });
-    $("setup-to").addEventListener("change", function (e) { state.to = parseInt(e.target.value, 10); });
-    $("setup-locate").addEventListener("click", function () {
-      locate($("setup-locate-status"), function () { $("setup-city").value = state.city; });
+    $("step3-next").addEventListener("click", function () {
+      var from = parseInt($("setup-from").value, 10), to = parseInt($("setup-to").value, 10);
+      if (to <= from) { to = Math.min(24, from + 1); }
+      state.from = from; state.to = to;
+      setStep(4);
     });
+    function allowDone() { $("setup-done").disabled = false; }
+    $("setup-locate").addEventListener("click", function () {
+      $("setup-locate").setAttribute("aria-pressed", "true");
+      $("setup-noloc").setAttribute("aria-pressed", "false");
+      locate($("setup-locate-status"), function () { $("setup-city").value = state.city; allowDone(); }, allowDone);
+    });
+    $("setup-noloc").addEventListener("click", function () {
+      $("setup-noloc").setAttribute("aria-pressed", "true");
+      $("setup-locate").setAttribute("aria-pressed", "false");
+      $("setup-locate-status").textContent = t("no_location_note");
+      allowDone();
+    });
+    if (PAGE === "setup") setStep(1);
     $("setup-done").addEventListener("click", function () {
       var days = currentCity().replay_days || [];
-      if (state.date !== "" && days.length && !days.some(function (d) { return d.date === state.date; })) state.date = days[0].date;
       saveProfile();
       location.href = "/";
     });
@@ -831,7 +876,6 @@
     $("city").addEventListener("change", function (e) {
       state.city = e.target.value;
       var days = currentCity().replay_days || [];
-      if (state.date !== "" && days.length) state.date = days[0].date;
       saveProfile();
       renderDays();
       load();

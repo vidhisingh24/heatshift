@@ -1,39 +1,59 @@
 {% extends "base.html" %}
 {% block title %}Setup{% endblock %}
 {% block content %}
-<section class="setup" id="setup" aria-labelledby="setup-title">
+<section class="setup" id="setup" aria-live="polite">
   <div class="card setup-card">
-    <h1 id="setup-title" data-t="setup_title"></h1>
-    <p class="setup-sub" data-t="setup_sub"></p>
+    <ol class="steps" aria-hidden="true">
+      <li data-dot="1"></li><li data-dot="2"></li><li data-dot="3"></li><li data-dot="4"></li>
+    </ol>
 
-    <p class="label" data-t="setup_lang"></p>
-    <div class="setup-langs" role="group">
-      <button type="button" class="big-choice" data-setup-lang="en" lang="en">English</button>
-      <button type="button" class="big-choice" data-setup-lang="hi" lang="hi">हिंदी</button>
+    <!-- Step 1: language (asked in both languages, before anything else) -->
+    <div class="step" data-step="1">
+      <h1 class="step-title">भाषा चुनें · Choose your language</h1>
+      <div class="setup-langs" role="group">
+        <button type="button" class="big-choice" data-setup-lang="hi" lang="hi">हिंदी</button>
+        <button type="button" class="big-choice" data-setup-lang="en" lang="en">English</button>
+      </div>
     </div>
 
-    <p class="label" data-t="work_as"></p>
-    <div class="setup-roles" id="setup-roles"></div>
+    <!-- Step 2: job -->
+    <div class="step" data-step="2" hidden>
+      <h1 class="step-title" data-t="step_job"></h1>
+      <p class="setup-sub" data-t="step_job_sub"></p>
+      <div class="setup-roles" id="setup-roles"></div>
+      <button type="button" class="btn btn-quiet step-back" data-back="1" data-t="back"></button>
+    </div>
 
-    <label class="field">
-      <span class="label" data-t="city"></span>
-      <select id="setup-city"></select>
-    </label>
-    <button type="button" class="btn" id="setup-locate">
-      <svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg><span data-t="use_location"></span>
-    </button>
-    <p class="hint" id="setup-locate-status" data-t="location_private"></p>
-
-    <details class="setup-hours">
-      <summary data-t="work_hours_optional"></summary>
-      <div class="hours-pick">
-        <label><span data-t="from"></span> <select id="setup-from"></select></label>
-        <label><span data-t="to"></span> <select id="setup-to"></select></label>
+    <!-- Step 3: working hours -->
+    <div class="step" data-step="3" hidden>
+      <h1 class="step-title" data-t="step_hours"></h1>
+      <p class="setup-sub" data-t="work_hours_hint"></p>
+      <div class="hours-pick hours-big">
+        <label><span class="label" data-t="from"></span><select id="setup-from"></select></label>
+        <label><span class="label" data-t="to"></span><select id="setup-to"></select></label>
       </div>
-      <p class="hint" data-t="work_hours_hint"></p>
-    </details>
+      <button type="button" class="btn btn-primary btn-wide" id="step3-next" data-t="next"></button>
+      <button type="button" class="btn btn-quiet step-back" data-back="2" data-t="back"></button>
+    </div>
 
-    <button type="button" class="btn btn-primary btn-wide" id="setup-done" data-t="setup_done"></button>
+    <!-- Step 4: location + city -->
+    <div class="step" data-step="4" hidden>
+      <h1 class="step-title" data-t="step_location"></h1>
+      <p class="setup-sub" data-t="location_private"></p>
+      <div class="loc-choices">
+        <button type="button" class="big-choice" id="setup-locate">
+          <svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg><span data-t="allow_location"></span>
+        </button>
+        <button type="button" class="big-choice" id="setup-noloc" data-t="no_location"></button>
+      </div>
+      <p class="hint loc-status" id="setup-locate-status"></p>
+      <label class="field">
+        <span class="label" data-t="city"></span>
+        <select id="setup-city"></select>
+      </label>
+      <button type="button" class="btn btn-primary btn-wide" id="setup-done" data-t="setup_done" disabled></button>
+      <button type="button" class="btn btn-quiet step-back" data-back="3" data-t="back"></button>
+    </div>
   </div>
 </section>
 {% endblock %}
