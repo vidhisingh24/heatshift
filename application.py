@@ -10,6 +10,7 @@ from heatshift.schedule import build_schedule
 from heatshift.weather import WeatherError, get_hourly, parse_date
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("heatshift")
 
 # Elastic Beanstalk's Python platform looks for a WSGI callable named `application`.
 application = Flask(__name__)
@@ -72,6 +73,8 @@ def plan():
     message, message_source = get_message(
         summary, profile, city, lang, (city_key, role, lang, weather["date"], weather["mode"]),
     )
+    log.info("plan city=%s role=%s lang=%s date=%s mode=%s level=%s message_source=%s",
+             city_key, role, lang, weather["date"], weather["mode"], summary["worst_level"], message_source)
     return jsonify({
         "city": city_key,
         "city_name": city[f"name_{lang}"],
