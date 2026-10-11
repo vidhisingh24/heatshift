@@ -52,6 +52,8 @@ def summarize(rows):
     return {
         "peak_heat_index_c": peak["heat_index_c"],
         "peak_temp_c": max(r["temp_c"] for r in rows),
+        "peak_air_c": peak["temp_c"],  # air temperature at the hottest feels-like hour
+        "peak_rh": peak["rh"],
         "peak_time": peak["time"],
         "worst_level": worst,
         "avoid_windows": _windows([r["hour"] for r in day if r["avoid"]]),

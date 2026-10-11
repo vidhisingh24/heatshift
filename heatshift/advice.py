@@ -51,7 +51,7 @@ def build_prompt(summary, profile, city, lang):
         f"Worker: {profile['name_en']} ({profile['workload']} physical work)",
         f"City: {city['name_en']}",
         f"Hottest time: {summary['peak_time']}, feels like {round(summary['peak_heat_index_c'])}°C "
-        f"(air {round(summary['peak_temp_c'])}°C)",
+        f"(air {round(summary.get('peak_air_c', summary['peak_temp_c']))}°C at that hour)",
         f"Worst heat level today: {summary['worst_level']}",
     ]
     if summary["avoid_windows"]:

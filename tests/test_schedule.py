@@ -76,6 +76,13 @@ def test_summary_peak():
     assert summary["danger_hours"] >= 2
 
 
+def test_summary_air_matches_peak_hour():
+    rows, summary = build_schedule(HOT_DAY, DELHI, PROFILES["rider"])
+    peak_row = next(r for r in rows if r["time"] == summary["peak_time"])
+    assert summary["peak_air_c"] == peak_row["temp_c"]
+    assert summary["peak_rh"] == peak_row["rh"]
+
+
 @pytest.mark.parametrize("hours, expected", [
     ([], []),
     ([5, 6, 7], [(5, 8)]),

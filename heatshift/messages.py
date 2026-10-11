@@ -45,7 +45,7 @@ def template_message(summary, role, lang):
         return t["low"]
 
     parts = [t["peak"].format(time=summary["peak_time"], hi=round(summary["peak_heat_index_c"]),
-                              temp=round(summary["peak_temp_c"]))]
+                              temp=round(summary.get("peak_air_c", summary["peak_temp_c"])))]
     if summary["avoid_windows"]:
         parts.append(t["avoid"][role].format(windows=format_windows(summary["avoid_windows"], lang)))
     if summary["max_rest_min"]:
