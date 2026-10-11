@@ -100,6 +100,9 @@ Any **Extreme danger** hour is marked "avoid" for every profile.
 | **Amazon Bedrock** (`amazon.nova-lite-v1:0`, in-Region in Sydney) | Writes the English or Hindi advice through the Converse API |
 | **IAM** instance role `aws-elasticbeanstalk-ec2-role` | Lets the server call Bedrock without any keys in the code or repo |
 | **Amazon S3** | Stores the application versions that Beanstalk deploys |
+| **Amazon EC2** | The t3.small instance Beanstalk runs the app on |
+
+HeatShift covers both of the event's AWS paths: **Build It** (Strands Agents, an AWS open-source tool) and **Ship It** (deployed on AWS: Elastic Beanstalk on EC2, with S3 and Bedrock).
 
 The model and region are configuration, not code:
 
@@ -204,6 +207,18 @@ docs/                 demo script, writeup, blog draft
 4. India Meteorological Department: heat wave criteria. https://mausam.imd.gov.in/
 
 **Weather data by [Open-Meteo.com](https://open-meteo.com/) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)).**
+
+## Third-party credits
+
+Everything in this repo was written during the event (8–11 October 2026). It builds on these open-source projects and data:
+
+| Used | License |
+|---|---|
+| [Open-Meteo](https://open-meteo.com/) weather API (forecast + historical archive) | Data: CC BY 4.0 |
+| [Flask](https://flask.palletsprojects.com/), [Requests](https://requests.readthedocs.io/), [gunicorn](https://gunicorn.org/) | BSD-3-Clause / Apache-2.0 / MIT |
+| [Strands Agents SDK](https://github.com/strands-agents/sdk-python), [boto3](https://github.com/boto/boto3) | Apache-2.0 |
+| [IBM Plex Sans, Sans Devanagari, Mono](https://github.com/IBM/plex) via Google Fonts | SIL Open Font License 1.1 |
+| NWS heat index equation, NWS Heat Index Chart, IMD heat wave criteria | Public methods, cited in [Sources](#sources) |
 
 ## License
 

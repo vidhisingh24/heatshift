@@ -41,6 +41,8 @@ Because it is October, the app can **replay real 2024 Delhi heatwave days** from
 
 ## Where AWS fits
 
+HeatShift covers both of the event's AWS paths: **Build It** (Strands Agents, an AWS open-source tool) and **Ship It** (deployed on AWS: Elastic Beanstalk on EC2, with S3 and Bedrock). The demo video shows the running Beanstalk environment, the live URL and the server logs of Bedrock calls.
+
 - **AWS Elastic Beanstalk** hosts the Flask app: Python 3.12 on Amazon Linux 2023, single instance, in ap-southeast-2. I deploy from the CLI with a small PowerShell script that zips the app, uploads it to S3, creates a version, updates the environment, waits for Ready and checks `/health`.
 - **Strands Agents**, AWS's open-source agent SDK, runs the advice agent. Its system prompt only allows the numbers HeatShift computed: no invented temperatures, no lists, plain words, Hindi in Devanagari.
 - **Amazon Bedrock** (Amazon Nova Lite, in-Region in Sydney) writes the message through the Converse API. Model and region are environment variables.
