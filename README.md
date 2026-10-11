@@ -2,7 +2,7 @@
 
 **Hour-by-hour heat work plans for India's outdoor workers: when to work, rest, drink water or stay out of the sun, in English and Hindi.**
 
-[Live demo](https://d2rsnmdxkrj7b8.cloudfront.net) · [Demo video](#) <!-- add YouTube link --> · [Writeup](docs/writeup.md)
+[Live demo](https://d2rsnmdxkrj7b8.cloudfront.net) · [Demo video](https://youtu.be/TatXWYDK8GY) · [Writeup](docs/writeup.md)
 
 > Prototype, not medical advice. In an emergency call **108** (ambulance) or **112**.
 

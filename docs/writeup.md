@@ -1,80 +1,47 @@
 # HeatShift: submission writeup
 
-**Track:** Heat and Water · **Live:** https://d2rsnmdxkrj7b8.cloudfront.net · **Repo:** https://github.com/vidhisingh24/heatshift
+The video shows: the README with the architecture, the live app on CloudFront, and the AWS console with Elastic Beanstalk, CloudFront and Bedrock.
+
+**Track:** Heat and Water · **Live:** https://d2rsnmdxkrj7b8.cloudfront.net · **Video:** https://youtu.be/TatXWYDK8GY · **Repo:** https://github.com/vidhisingh24/heatshift
 
 ## The problem
 
-India's heat action plans are built around warnings: a colour code and a temperature. The Centre for Policy Research reviewed 37 of these plans and found that only 10 set locally defined thresholds and only 2 assessed who is vulnerable (Pillai & Dalal, CPR, 2023).
+India's heat action plans warn about temperature, but they rarely tell an outdoor worker what to do hour by hour. A Centre for Policy Research review of 37 plans found only 10 set locally defined thresholds, and only 2 assessed who is vulnerable (Pillai & Dalal, 2023). Street vendors, delivery riders and construction workers can't stay indoors. In a WIEGO survey of around 500 Delhi street vendors in 2025, 89% had no free, clean drinking water at work ([Question of Cities](https://questionofcities.org/mapping-heat-stress-shows-delhi-street-vendors-precarity/)).
 
-The people most exposed are informal outdoor workers: street vendors, delivery riders and construction workers. They can't stay indoors, and most have no support at work. In a WIEGO survey of around 500 Delhi street vendors in 2025, 89% had no access to free clean drinking water while working ([Question of Cities](https://questionofcities.org/mapping-heat-stress-shows-delhi-street-vendors-precarity/)).
+## What HeatShift does
 
-A warning that says "44°C" leaves the decision to them. Should they take the 1 PM delivery? How long should they rest? How often should they drink water?
+A mobile-first web app in English and Hindi. There are no accounts. On the first visit it asks four questions: language, job, working hours and location. After that it opens straight on today's forecast.
 
-## Who it's for
+- **Home:** one line, such as "Avoid 12:00–16:00. Best: 05:00–08:00, 19:00–22:00", plus a 24-hour colour bar, the rest and water rule, and a warning for danger hours inside the worker's own shift.
+- **Safe trip:** "I have to go out at 2 PM for 2 hours" gives the risk, a checklist for that job (based on NCDC and NDMA guidance), the nearest cooler time, and a red box with 108/112.
+- **Nearby:** free drinking water, shops selling water or ORS, and shaded or AC places from OpenStreetMap, with walking time and a "10-minute break" pick. The location stays on the phone.
+- **Ask:** questions in plain Hindi, Hinglish or English. The AI answers only from HeatShift's own data, and emergency words go straight to 108/112.
+- **Day plan:** shift blocks, an hourly chart, read-aloud, WhatsApp share and a printable poster for a site or stall.
 
-- **Ravi, delivery rider:** paid per order, so he rides through the afternoon. He needs to know which hours to skip and how to space his breaks.
-- **Sunita, street vendor:** can't leave her stall. She needs to know when to move into shade or cover the stall, and how often to drink water she has to buy.
-- **Imran, construction worker:** does heavy work on site. He needs longer rest cycles, and a clear "stop" window his supervisor can see.
-
-## What I built
-
-HeatShift is a mobile-first web app. You pick your city, your work and your language, and get:
-
-- A **heat level for the day** (Safe, Caution, Danger, Extreme danger) and the hottest hour.
-- **Three numbers:** hours to stop work (or move into shade), rest minutes per hot hour, and a water reminder interval.
-- **A shift plan** that groups the working day into blocks (work, work with breaks, stop), plus an interactive temperature chart and an hour-by-hour table.
-- **Print or save as PDF**, giving a one-page notice for a site supervisor or market board.
-- **Know the signs:** heat exhaustion vs. heat stroke, and when to call 108.
-- **A short advice message in English or Hindi**, with a Listen button that reads it aloud and a **Share on WhatsApp** button for passing the plan to co-workers.
-- **"I can't avoid this time" safe-trip mode.** "I have to go out at 14:00 for 2 hours" returns the risk for that window, a checklist for the job (NCDC/NDMA guidance), the nearest cooler time ("go 3 hours later: feels like 44°C instead of 46°C"), and a red stop-signs box with 108/112 call buttons.
-- **Find water and shade near me.** OpenStreetMap places through a server-side Overpass proxy: free drinking water, shops selling water or ORS, and shaded or AC places, with walking times and a "10-minute break" pick. The location stays on the phone.
-- **AI chat assistant.** Workers ask in their own words, in English or Hindi. A Strands agent on Bedrock answers by calling HeatShift's own tools (`get_plan`, `get_trip`, `find_places`), so it never invents a temperature. Emergency words skip the AI and go straight to 108/112.
-- **First-visit setup.** Job, city, language and optional work hours are saved on the phone, and danger hours inside the worker's shift are pointed out. There are no accounts and no database.
-- **Two cities, Delhi and Ahmedabad.** Ahmedabad had India's first heat action plan. It was added with one JSON entry and no code changes.
-- **The data source, last-updated time, Open-Meteo attribution and a "prototype, not medical advice" note**, always visible.
-
-Because it is October, the app can **replay real 2024 Delhi heatwave days** from the Open-Meteo archive:
-- 18 June 2024, feels like 47°C
-- 29 May 2024, dry 46°C
-
-### How the numbers are made
-
-1. Hourly temperature and humidity come from Open-Meteo: the forecast API, or the archive for replay.
-2. The heat index uses the NWS Rothfusz equation with its humidity adjustments.
-3. Levels use the NWS Heat Index Chart bands, converted to °C and stored per city in `cities.json`, so cities can set local thresholds.
-4. **The IMD floor:** air at 45°C or above is at least Danger, and 47°C or above is Extreme. Without this, dry Delhi heat (46°C at 10% humidity gives a heat index of only about 43°C) would be under-rated.
-5. Each worker profile maps the level to rest, water and avoid-hours. Heavy work gets more rest, and vendors get "shade" instead of "stop".
+**How the level is set.** The NWS heat index comes from hourly temperature and humidity (Open-Meteo), mapped to four levels. IMD heatwave rules are added on top: air ≥ 45°C is at least Danger and ≥ 47°C is Extreme, so dry heat isn't under-rated. The thresholds are stored per city.
 
 ## Where AWS fits
 
-HeatShift covers both of the event's AWS paths: **Build It** (Strands Agents, an AWS open-source tool) and **Ship It** (deployed on AWS: Elastic Beanstalk on EC2, with S3 and Bedrock). The demo video shows the running Beanstalk environment, the live URL and the server logs of Bedrock calls.
+HeatShift covers both paths: **Build It** and **Ship It**.
 
-- **AWS Elastic Beanstalk** hosts the Flask app: Python 3.12 on Amazon Linux 2023, single instance, in ap-southeast-2. I deploy from the CLI with a small PowerShell script that zips the app, uploads it to S3, creates a version, updates the environment, waits for Ready and checks `/health`.
-- **Strands Agents with tool use** powers the chat assistant. The agent's tools are HeatShift's own deterministic functions (plan, trip, places). Bedrock decides which tool to call, and the answer can only contain numbers the tools returned.
-- **Strands Agents**, AWS's open-source agent SDK, also runs the advice agent. Its system prompt only allows the numbers HeatShift computed: no invented temperatures, no lists, plain words, Hindi in Devanagari.
-- **Amazon Bedrock** (Amazon Nova Lite, in-Region in Sydney) writes the message through the Converse API. Model and region are environment variables.
-- **IAM instance role:** the server calls Bedrock with its role, so there are no keys anywhere.
+- **Amazon CloudFront:** the public HTTPS link. Phones only share location over HTTPS. Caching is off and POST is forwarded for chat.
+- **AWS Elastic Beanstalk:** runs the Flask app (Python 3.12, Amazon Linux 2023, EC2 t3.small, Sydney). It is deployed from the CLI with a script that uploads to S3, updates the environment and checks `/health`.
+- **Strands Agents with Amazon Bedrock (Nova Lite, in-Region):** two agents. One writes the daily advice. The other is the chat assistant, whose tools are HeatShift's own functions (`get_plan`, `get_trip`, `find_places`), so it can't invent a temperature or a place.
+- **IAM instance role:** lets the server call Bedrock with no keys in the code.
 
-The AI is never in the critical path. Bedrock calls have an 8-second limit, a one-minute cooldown after a failure, and output checks (length, and Devanagari script for Hindi). Any failure returns template text in the same language.
+The AI is never in the critical path. Timeouts, output checks and a rate limit apply, and any failure returns deterministic text in the same language.
 
 ## Challenges
 
-- **Dry heat breaks the heat index.** Delhi's worst pre-monsoon days are hot and very dry, and the heat index can read below the air temperature. Adding IMD's heat wave rules as a floor fixed that.
-- **Bedrock on a brand-new AWS account.** Cross-Region inference profiles were blocked while the account was being verified, and Anthropic models need a use-case form. I used an in-Region model (Nova Lite in Sydney) and made the model a config value, so switching later needs no code change.
-- **No access keys.** The account uses `aws login` console credentials. The Beanstalk console kept failing with "security token invalid", so I moved deploys to the CLI.
-- **Making it usable outside the team.** That meant big tap targets, a light high-contrast theme for sunlight, Hindi throughout, colour always paired with a text label, and read-aloud.
+- Dry Delhi heat can make the heat index read lower than the air temperature; the IMD floor fixed that.
+- On a new AWS account, cross-Region Bedrock profiles were blocked at first, so I used an in-Region model and made the model a setting.
+- Location needs HTTPS, so CloudFront was added in front of Beanstalk.
+- Workers write Hindi in English letters, so the chat detects Hinglish and answers in Hindi.
 
-## Impact and what's next
+## What's next
 
-HeatShift turns a warning into a plan for the day, specific to the job. What's next:
-
-1. **More cities, each with its own thresholds.** Adding a city is one JSON entry.
-2. **SMS / WhatsApp / IVR delivery** of the morning plan, for workers without smartphones or data.
-3. **An employer and contractor view**, so a site supervisor sees the same stop window as the worker.
-4. **Calibrating the profiles with worker unions and public-health researchers**, and adding a direct-sun correction.
-5. **Water-point and shade maps**, linking to the WIEGO finding on drinking water.
+Local thresholds set with city health departments, SMS or WhatsApp morning alerts for workers without smartphones, an employer view, and more cities. A city is one JSON entry.
 
 ## AI tools used
 
-- **Claude Code**, used inside the **Antigravity** IDE: planning, code, tests and documentation. I reviewed and tested everything it produced.
-- **Amazon Bedrock (Amazon Nova Lite) through Strands Agents**: generates the advice message inside the app.
+Claude Code in the Antigravity IDE, for planning, code, tests and docs, all reviewed and tested by me. Amazon Bedrock (Nova Lite) via Strands Agents inside the app.
