@@ -14,7 +14,12 @@
     "amazon.nova-pro-v1:0": "Amazon Nova Pro",
   };
 
-  var $ = function (id) { return document.getElementById(id); };
+  // Each page has only some of the sections. Missing elements resolve to a detached
+  // placeholder, so the shared render code needs no per-page branches.
+  var $ = function (id) { return document.getElementById(id) || document.createElement("div"); };
+  var has = function (id) { return !!document.getElementById(id); };
+  var PAGE = document.body.getAttribute("data-page") || "home";
+  var NEEDS_PLAN = PAGE === "home" || PAGE === "plan";
 
   // from/to: optional work hours (-1 = not set). lat/lon: optional, kept only in this browser.
   var state = { role: "rider", lang: "en", city: "delhi", date: "2024-06-18", from: -1, to: -1, lat: null, lon: null };
@@ -84,7 +89,9 @@
     return out;
   }
   function saveProfile() {
-    store("profile", JSON.stringify({ role: state.role, city: state.city, lang: state.lang, from: state.from, to: state.to }));
+    store("profile", JSON.stringify({
+      role: state.role, city: state.city, lang: state.lang, from: state.from, to: state.to, date: state.date,
+    }));
   }
   function loadProfile() {
     try {
@@ -95,6 +102,7 @@
         if (p.city) state.city = p.city;
         if (typeof p.from === "number") state.from = p.from;
         if (typeof p.to === "number") state.to = p.to;
+        if (p.date === "" || /^\d{4}-\d{2}-\d{2}$/.test(p.date || "")) state.date = p.date;
       }
       var loc = JSON.parse(recall("loc") || "null");
       if (loc && typeof loc.lat === "number") { state.lat = loc.lat; state.lon = loc.lon; }
@@ -149,6 +157,7 @@
     renderDays();
     renderHourSelects();
     renderSetup();
+    renderContext();
     document.dispatchEvent(new CustomEvent("hs:lang"));
   }
 
@@ -202,11 +211,17 @@
     sel.value = state.city;
   }
 
-  function showSetup(show) {
-    $("setup").hidden = !show;
-    $("main").hidden = show;
-    $("change-setup").hidden = show;
-    if (show) { renderSetup(); window.scrollTo(0, 0); }
+  // "Delivery rider · Delhi · Heatwave replay: 18 Jun 2024" on pages that don't load the plan
+  function renderContext() {
+    if (!has("context-line") || document.getElementById("context-line").hasAttribute("data-t")) return;
+    var role = roleList()[state.role];
+    var city = cityList()[state.city] || currentCity();
+    var day = t("today");
+    (city.replay_days || []).forEach(function (d) {
+      if (d.date === state.date) day = fill(t("replay"), { label: d["label_" + state.lang] });
+    });
+    if (state.date && day === t("today")) day = state.date;
+    $("context-line").textContent = [role ? role["name_" + state.lang] : "", city["name_" + state.lang], day].join(" · ");
   }
 
   function nearestCity(lat, lon) {
@@ -780,9 +795,9 @@
         var lang = b.getAttribute("data-lang");
         if (lang === state.lang) return;
         state.lang = lang;
-        saveProfile();
+        if (PAGE !== "setup") saveProfile();
         applyText();
-        if (!$("main").hidden) load();
+        if (NEEDS_PLAN) load();
       });
     });
 
@@ -800,11 +815,8 @@
       var days = currentCity().replay_days || [];
       if (state.date !== "" && days.length && !days.some(function (d) { return d.date === state.date; })) state.date = days[0].date;
       saveProfile();
-      applyText();
-      showSetup(false);
-      load();
+      location.href = "/";
     });
-    $("change-setup").addEventListener("click", function () { showSetup(true); });
 
     // Work hours in the sidebar
     function onHours() {
@@ -815,7 +827,7 @@
     }
     $("from-hour").addEventListener("change", onHours);
     $("to-hour").addEventListener("change", onHours);
-    $("day").addEventListener("change", function (e) { state.date = e.target.value; renderDays(); load(); });
+    $("day").addEventListener("change", function (e) { state.date = e.target.value; saveProfile(); renderDays(); load(); });
     $("city").addEventListener("change", function (e) {
       state.city = e.target.value;
       var days = currentCity().replay_days || [];
@@ -830,8 +842,10 @@
     // Print the hour table too
     var details = document.querySelector(".table-wrap");
     var wasOpen = false;
-    window.addEventListener("beforeprint", function () { wasOpen = details.open; details.open = true; });
-    window.addEventListener("afterprint", function () { details.open = wasOpen; });
+    if (details) {
+      window.addEventListener("beforeprint", function () { wasOpen = details.open; details.open = true; });
+      window.addEventListener("afterprint", function () { details.open = wasOpen; });
+    }
 
     if (synth && window.SpeechSynthesisUtterance) {
       $("listen").hidden = false;
@@ -846,10 +860,14 @@
 
     fetch("/api/options")
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (data) { if (data) { options = data; renderRoles(); renderCities(); renderDays(); renderSetup(); } })
+      .then(function (data) {
+        if (data) { options = data; renderRoles(); renderCities(); renderDays(); renderSetup(); renderContext(); }
+      })
       .catch(function () { /* built-in defaults are fine */ });
 
-    if (skipSetup) { showSetup(false); load(); } else { showSetup(true); }
+    // First visit goes to setup; About stays readable without it.
+    if (!skipSetup && PAGE !== "setup" && PAGE !== "about") { location.replace("/setup"); return; }
+    if (NEEDS_PLAN) load();
   }
 
   // Shared with trip.js, places.js and chat.js

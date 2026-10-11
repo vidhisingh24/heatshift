@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Nearby{% endblock %}
+{% block content %}
+<header class="page-head">
+  <h1 data-t="nav_nearby_long"></h1>
+  <p class="context-line" id="context-line"></p>
+</header>
+
+<section class="card places" id="places-card" aria-labelledby="places-title">
+  <div class="card-head">
+    <h2 id="places-title" data-tp="title"></h2>
+  </div>
+  <p class="fine" data-tp="intro"></p>
+  <div class="actions">
+    <button type="button" class="btn btn-primary" id="places-near">
+      <svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg><span data-tp="near_me"></span>
+    </button>
+    <button type="button" class="btn" id="places-centre" data-tp="city_centre"></button>
+  </div>
+  <p class="hint" id="places-status" aria-live="polite"></p>
+  <div id="places-result"></div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='places.js') }}"></script>{% endblock %}

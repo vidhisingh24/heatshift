@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Safe trip{% endblock %}
+{% block content %}
+<header class="page-head">
+  <h1 data-t="nav_trip_long"></h1>
+  <p class="context-line" id="context-line"></p>
+</header>
+
+<section class="card trip" id="trip-card" aria-labelledby="trip-title">
+  <div class="card-head">
+    <h2 id="trip-title" data-tr="title"></h2>
+  </div>
+  <form class="trip-form" id="trip-form">
+    <label><span data-tr="go_at"></span>
+      <select id="trip-start"></select>
+    </label>
+    <label><span data-tr="for"></span>
+      <select id="trip-hours"></select>
+    </label>
+    <button type="submit" class="btn btn-primary" data-tr="check"></button>
+  </form>
+  <div id="trip-result" aria-live="polite"></div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='trip.js') }}"></script>{% endblock %}

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta, timezone
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request
 
 from heatshift.advice import get_message
 from heatshift.chat import MAX_MESSAGE_CHARS, RateLimited, answer, check_rate
@@ -77,9 +77,22 @@ def load_plan(city_key, role, lang, date_str):
     }
 
 
-@application.get("/")
-def index():
-    return render_template("index.html")
+PAGES = {"/": "home", "/setup": "setup", "/trip": "trip", "/nearby": "nearby", "/ask": "ask",
+         "/plan": "plan", "/about": "about"}
+
+
+def _page(name):
+    return lambda: render_template(f"{name}.html", page=name)
+
+
+for _path, _name in PAGES.items():
+    application.add_url_rule(_path, endpoint=f"page_{_name}", view_func=_page(_name), methods=["GET"])
+
+
+@application.get("/site")
+def site():
+    # The work-day plan (shift blocks, chart, advice, print poster) lives at /plan for every job.
+    return redirect("/plan", code=301)
 
 
 @application.get("/health")

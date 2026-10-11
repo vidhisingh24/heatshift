@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<header class="page-head">
+  <h1 data-t="about_title"></h1>
+  <p class="context-line" data-t="about_sub"></p>
+</header>
+
+<section class="card prose">
+  <h2 data-t="about_problem_h"></h2>
+  <p data-t="about_problem"></p>
+  <ul class="evidence">
+    <li><span data-t="about_ev_cpr"></span> <a href="https://cprindia.org/wp-content/uploads/2023/03/Heat-Report_Final_27March-23.pdf" target="_blank" rel="noopener">CPR, 2023</a></li>
+    <li><span data-t="about_ev_wiego"></span> <a href="https://www.wiego.org/wp-content/uploads/2026/02/WIEGO-Policy-Brief-34.pdf" target="_blank" rel="noopener">WIEGO</a></li>
+  </ul>
+</section>
+
+<section class="card prose">
+  <h2 data-t="about_method_h"></h2>
+  <p data-t="about_method"></p>
+  <ul class="legend-list">
+    <li><svg class="lv-safe" aria-hidden="true"><use href="#i-safe"/></svg><strong data-t="lv_safe"></strong><span class="range">&lt; 32.2°C</span></li>
+    <li><svg class="lv-caution" aria-hidden="true"><use href="#i-caution"/></svg><strong data-t="lv_caution"></strong><span class="range">32.2–39.4°C</span></li>
+    <li><svg class="lv-danger" aria-hidden="true"><use href="#i-danger"/></svg><strong data-t="lv_danger"></strong><span class="range">39.4–51.7°C</span></li>
+    <li><svg class="lv-extreme" aria-hidden="true"><use href="#i-extreme"/></svg><strong data-t="lv_extreme"></strong><span class="range">≥ 51.7°C</span></li>
+  </ul>
+  <p class="fine" data-t="legend_note"></p>
+</section>
+
+<section class="card">
+  <h2 data-t="signs_title"></h2>
+  <div class="signs">
+    <div class="sign">
+      <h3 data-t="exhaustion"></h3>
+      <p class="fine" data-t="exhaustion_signs"></p>
+      <p data-t="exhaustion_do"></p>
+    </div>
+    <div class="sign sign-urgent">
+      <h3 data-t="stroke"></h3>
+      <p class="fine" data-t="stroke_signs"></p>
+      <p data-t="stroke_do"></p>
+    </div>
+  </div>
+</section>
+
+<section class="card prose">
+  <h2 data-t="about_sources_h"></h2>
+  <ul class="source-list">
+    <li><a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>): <span data-t="src_openmeteo"></span></li>
+    <li>© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> (ODbL), via the <a href="https://overpass-api.de/" target="_blank" rel="noopener">Overpass API</a>: <span data-t="src_osm"></span></li>
+    <li><a href="https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml" target="_blank" rel="noopener">NWS heat index equation</a> · <a href="https://www.weather.gov/safety/heat-index" target="_blank" rel="noopener">NWS heat index chart</a> · <a href="https://mausam.imd.gov.in/" target="_blank" rel="noopener">IMD heatwave criteria</a></li>
+    <li><a href="https://ncdc.mohfw.gov.in/uploads/pdf/5.%20Public%20Health%20Advisory_Extreme%20HeatHeatwave.pdf" target="_blank" rel="noopener">NCDC Public Health Advisory: Extreme Heat</a> · <a href="https://ndma.gov.in/Natural-Hazards/Heat-Wave/Dos-Donts" target="_blank" rel="noopener">NDMA heat wave do's and don'ts</a> · <a href="https://www.wiego.org/wp-content/uploads/2025/10/Working-under-heat22-A-practical-guide-for-workers-in-Delhi.pdf" target="_blank" rel="noopener">WIEGO: Working under heat (Delhi)</a></li>
+    <li><a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a> (BSD-2) · <a href="https://github.com/IBM/plex" target="_blank" rel="noopener">IBM Plex</a> (OFL)</li>
+  </ul>
+</section>
+
+<section class="card prose">
+  <h2 data-t="about_built_h"></h2>
+  <p data-t="about_built"></p>
+  <p data-t="about_ai_tools"></p>
+  <p><a href="https://github.com/vidhisingh24/heatshift" target="_blank" rel="noopener" data-t="source_code"></a></p>
+</section>
+
+<aside class="disclaimer" role="note">
+  <strong data-t="prototype"></strong>
+  <span data-t="disclaimer"></span>
+</aside>
+{% endblock %}

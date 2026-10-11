@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}HeatShift{% endblock %} · HeatShift</title>
+  <meta name="description" content="Hour-by-hour work and rest plan for outdoor workers on hot days, in English and Hindi.">
+  <meta name="theme-color" content="#f6f5f1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23171614'/%3E%3Ccircle cx='16' cy='14' r='5' fill='%23d39b1c'/%3E%3Cpath d='M7 22h18M10 26h12' stroke='%23f6f5f1' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Devanagari:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-page="{{ page }}" class="page-{{ page }}">
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-vendor" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9a3 3 0 0 0 6 0m0 0a3 3 0 0 0 6 0m0 0a3 3 0 0 0 6 0M5 12v8h14v-8M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-rider" viewBox="0 0 24 24"><circle cx="6" cy="17" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="17" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 17h6l-2-7h-3M13 10l2-4h3M15 6l3 11M4 11h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-construction" viewBox="0 0 24 24"><path d="M3 18h18M5 18v-2a7 7 0 0 1 14 0v2M10 9.5V6.5a2 2 0 0 1 4 0v3M8 11.5V9M16 11.5V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-safe" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M5 8.2l2 2 4-4.2" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-caution" viewBox="0 0 16 16"><path d="M8 1.5l7 12.5H1z" fill="currentColor"/><path d="M8 6v3.5M8 11.6v.1" stroke="#171614" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-danger" viewBox="0 0 16 16"><path d="M8 1.5l7 12.5H1z" fill="currentColor"/><path d="M8 6v3.5M8 11.6v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-extreme" viewBox="0 0 16 16"><path d="M5.1 1h5.8L15 5.1v5.8L10.9 15H5.1L1 10.9V5.1z" fill="currentColor"/><path d="M8 4.5v4.2M8 11.2v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6h-3M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 9v6M14 9v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.6 5.6l12.8 12.8" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6h-6v6H4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-trip" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v4l3 2M9 2h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9.5h8M8 12.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-plan" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v6M12 7.5v.1" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  {% set nav = [("home", "/", "i-home"), ("trip", "/trip", "i-trip"), ("nearby", "/nearby", "i-pin"), ("ask", "/ask", "i-ask"), ("plan", "/plan", "i-plan")] %}
+
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="/" aria-label="HeatShift home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#171614"/><circle cx="16" cy="14" r="5" fill="#d39b1c"/><path d="M7 22h18M10 26h12" stroke="#f6f5f1" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="brand-text">
+          <span class="brand-name">HeatShift</span>
+          <span class="brand-sub" data-t="tagline"></span>
+        </span>
+      </a>
+
+      {% if page != "setup" %}
+      <nav class="top-nav" aria-label="Main">
+        {% for key, href, ico in nav %}
+        <a href="{{ href }}" class="top-link"{% if page == key %} aria-current="page"{% endif %}>
+          <svg class="ico" aria-hidden="true"><use href="#{{ ico }}"/></svg><span data-t="nav_{{ key }}"></span>
+        </a>
+        {% endfor %}
+      </nav>
+      {% endif %}
+
+      <div class="header-actions">
+        {% if page != "setup" %}
+        <a class="link-btn" href="/setup" id="change-setup" data-t="change"></a>
+        <a class="icon-link" href="/about" aria-label="About"{% if page == "about" %} aria-current="page"{% endif %}>
+          <svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>
+        </a>
+        {% endif %}
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" data-lang="en" lang="en">EN</button>
+          <button type="button" data-lang="hi" lang="hi">हिं</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page" id="main">
+    {% block content %}{% endblock %}
+
+    <p class="disclaimer-line" role="note">
+      <strong data-t="prototype"></strong>
+      <span data-t="disclaimer_short"></span>
+      <a href="/about" data-t="about_link"></a>
+    </p>
+  </main>
+
+  {% if page != "setup" %}
+  <nav class="tab-bar" aria-label="Main">
+    {% for key, href, ico in nav %}
+    <a href="{{ href }}" class="tab"{% if page == key %} aria-current="page"{% endif %}>
+      <svg class="ico" aria-hidden="true"><use href="#{{ ico }}"/></svg><span data-t="nav_{{ key }}"></span>
+    </a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+
+  <script src="{{ url_for('static', filename='i18n.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

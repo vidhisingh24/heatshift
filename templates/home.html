@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Today{% endblock %}
+{% block content %}
+<p class="loading" id="loading" aria-live="polite" hidden><span class="spinner" aria-hidden="true"></span><span data-t="loading"></span></p>
+
+<section class="card error" id="error" hidden>
+  <p data-t="error"></p>
+  <button type="button" class="btn" id="retry" data-t="retry"></button>
+</section>
+
+<div id="plan" hidden>
+  <!-- Verdict -->
+  <section class="card verdict" id="overview">
+    <div class="overview-head">
+      <p class="meta-line" id="meta-line"></p>
+      <span class="badge" id="mode-badge"></span>
+    </div>
+    <div class="verdict-level">
+      <span class="level-pill" id="level-pill"></span>
+      <p class="peak-inline"><span id="hero-temp"></span>°C · <span id="hero-caption"></span></p>
+    </div>
+    <p class="rule-line" id="rule-line"></p>
+    <p class="shift-warning" id="shift-warning" hidden></p>
+
+    <div class="day-bar-wrap">
+      <div class="day-bar" id="day-bar" role="img"></div>
+      <div class="day-axis" id="day-axis" aria-hidden="true"></div>
+    </div>
+
+    <dl class="kpis kpis-two">
+      <div class="kpi">
+        <dt><svg class="ico" aria-hidden="true"><use href="#i-pause"/></svg><span data-t="rest_hr"></span></dt>
+        <dd id="rest-value"></dd>
+      </div>
+      <div class="kpi">
+        <dt><svg class="ico" aria-hidden="true"><use href="#i-drop"/></svg><span data-t="water"></span></dt>
+        <dd id="water-value"></dd>
+      </div>
+    </dl>
+  </section>
+</div>
+
+<!-- Day picker -->
+<section class="card day-card">
+  <label class="field">
+    <span class="label" data-t="day"></span>
+    <select id="day"></select>
+  </label>
+  <p class="hint" id="replay-note"></p>
+</section>
+
+<!-- Go to -->
+<nav class="go-grid" aria-label="More">
+  <a class="go-card" href="/trip">
+    <span class="go-ico"><svg class="ico" aria-hidden="true"><use href="#i-trip"/></svg></span>
+    <span class="go-text"><strong data-t="go_trip"></strong><span data-t="go_trip_sub"></span></span>
+    <svg class="ico go-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>
+  </a>
+  <a class="go-card" href="/nearby">
+    <span class="go-ico"><svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg></span>
+    <span class="go-text"><strong data-t="go_nearby"></strong><span data-t="go_nearby_sub"></span></span>
+    <svg class="ico go-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>
+  </a>
+  <a class="go-card" href="/ask">
+    <span class="go-ico"><svg class="ico" aria-hidden="true"><use href="#i-ask"/></svg></span>
+    <span class="go-text"><strong data-t="go_ask"></strong><span data-t="go_ask_sub"></span></span>
+    <svg class="ico go-arrow" aria-hidden="true"><use href="#i-arrow"/></svg>
+  </a>
+</nav>
+{% endblock %}

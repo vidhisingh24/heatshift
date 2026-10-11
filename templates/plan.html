@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Day plan{% endblock %}
+{% block content %}
+<header class="page-head">
+  <h1 data-t="nav_plan_long"></h1>
+</header>
+
+<p class="loading" id="loading" aria-live="polite" hidden><span class="spinner" aria-hidden="true"></span><span data-t="loading"></span></p>
+
+<section class="card error" id="error" hidden>
+  <p data-t="error"></p>
+  <button type="button" class="btn" id="retry" data-t="retry"></button>
+</section>
+
+<div id="plan" hidden>
+  <p class="print-title" id="print-title"></p>
+
+  <!-- Overview -->
+  <section class="card overview" id="overview">
+    <div class="overview-head">
+      <p class="meta-line" id="meta-line"></p>
+      <span class="badge" id="mode-badge"></span>
+    </div>
+    <div class="overview-main">
+      <div class="headline">
+        <span class="level-pill" id="level-pill"></span>
+        <p class="hero-figure"><span id="hero-temp"></span><span class="hero-unit">°C</span></p>
+        <p class="hero-caption" id="hero-caption"></p>
+        <p class="why-line" id="why-line"></p>
+      </div>
+      <dl class="kpis">
+        <div class="kpi">
+          <dt><svg class="ico" aria-hidden="true"><use href="#i-stop"/></svg><span id="avoid-label"></span></dt>
+          <dd id="avoid-value"></dd>
+        </div>
+        <div class="kpi">
+          <dt><svg class="ico" aria-hidden="true"><use href="#i-pause"/></svg><span data-t="rest_hr"></span></dt>
+          <dd id="rest-value"></dd>
+        </div>
+        <div class="kpi">
+          <dt><svg class="ico" aria-hidden="true"><use href="#i-drop"/></svg><span data-t="water"></span></dt>
+          <dd id="water-value"></dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- Advice -->
+  <section class="card advice">
+    <div class="card-head">
+      <h2 data-t="advice"></h2>
+      <span class="source-chip" id="message-chip"></span>
+    </div>
+    <p class="advice-text" id="message"></p>
+    <p class="fine" id="message-source"></p>
+    <div class="actions">
+      <button type="button" class="btn" id="listen" hidden>
+        <svg class="ico" aria-hidden="true"><use href="#i-sound"/></svg><span id="listen-text" data-t="listen"></span>
+      </button>
+      <a class="btn" id="share" href="#" target="_blank" rel="noopener">
+        <svg class="ico" aria-hidden="true"><use href="#i-share"/></svg><span data-t="share"></span>
+      </a>
+      <button type="button" class="btn btn-quiet" id="print">
+        <svg class="ico" aria-hidden="true"><use href="#i-print"/></svg><span data-t="print"></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Shift plan -->
+  <section class="card">
+    <div class="card-head">
+      <h2 data-t="shift_plan"></h2>
+      <span class="fine" data-t="shift_plan_sub"></span>
+    </div>
+    <div class="shift-bar" id="shift-bar" aria-hidden="true"></div>
+    <div class="shift-axis" id="shift-axis" aria-hidden="true"></div>
+    <ol class="segments" id="segments"></ol>
+  </section>
+
+  <!-- Chart -->
+  <section class="card">
+    <div class="card-head">
+      <h2 data-t="chart_title"></h2>
+      <div class="legend-keys" aria-hidden="true">
+        <span><i class="key key-hi"></i><span data-t="series_hi"></span></span>
+        <span><i class="key key-air"></i><span data-t="series_air"></span></span>
+        <span><i class="key key-stop"></i><span data-t="series_stop"></span></span>
+      </div>
+    </div>
+    <div class="chart" id="chart">
+      <svg id="chart-svg" role="img" aria-labelledby="chart-desc"></svg>
+      <div class="tooltip" id="tooltip" hidden></div>
+    </div>
+    <p class="sr-only" id="chart-desc"></p>
+
+    <details class="table-wrap">
+      <summary data-t="table_toggle"></summary>
+      <div class="table-scroll">
+        <table class="hours-table">
+          <thead>
+            <tr>
+              <th data-t="col_time"></th>
+              <th data-t="col_level"></th>
+              <th class="num" data-t="col_feels"></th>
+              <th class="num" data-t="col_air"></th>
+              <th class="num" data-t="col_rh"></th>
+              <th data-t="col_do"></th>
+            </tr>
+          </thead>
+          <tbody id="hours-body"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="sources">
+    <dl>
+      <dt data-t="data"></dt>
+      <dd id="data-source"></dd>
+      <dt data-t="updated"></dt>
+      <dd id="updated"></dd>
+    </dl>
+    <p class="attribution"><a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>)</p>
+  </section>
+</div>
+{% endblock %}

@@ -43,11 +43,56 @@ def test_plan_in_hindi(client, offline):
     assert "पानी" in body["message"]
 
 
-def test_index_page_has_attribution_and_disclaimer(client):
-    html = client.get("/").get_data(as_text=True)
-    assert "Weather data by Open-Meteo.com" in html
-    assert "CC BY 4.0" in html
+PAGES = {"/": "home", "/setup": "setup", "/trip": "trip", "/nearby": "nearby", "/ask": "ask",
+         "/plan": "plan", "/about": "about"}
+
+
+@pytest.mark.parametrize("path, page", PAGES.items())
+def test_every_page_renders_with_disclaimer_line(client, path, page):
+    r = client.get(path)
+    assert r.status_code == 200
+    html = r.get_data(as_text=True)
+    assert f'data-page="{page}"' in html
+    assert 'data-t="disclaimer_short"' in html and 'href="/about"' in html
+    assert "charset=utf-8" in r.headers["Content-Type"]
+
+
+@pytest.mark.parametrize("path", ["/", "/trip", "/nearby", "/ask", "/plan", "/about"])
+def test_pages_have_nav_with_active_item(client, path):
+    html = client.get(path).get_data(as_text=True)
+    for href in ("/trip", "/nearby", "/ask", "/plan"):
+        assert f'href="{href}"' in html
+    assert html.count('aria-current="page"') >= 1
+
+
+def test_setup_page_has_no_nav(client):
+    html = client.get("/setup").get_data(as_text=True)
+    assert 'class="tab-bar"' not in html and 'id="setup-done"' in html
+
+
+def test_each_page_loads_only_its_own_script(client):
+    assert "trip.js" in client.get("/trip").get_data(as_text=True)
+    assert "places.js" not in client.get("/trip").get_data(as_text=True)
+    assert "chat.js" in client.get("/ask").get_data(as_text=True)
+    assert "places.js" in client.get("/nearby").get_data(as_text=True)
+    home = client.get("/").get_data(as_text=True)
+    assert not any(s in home for s in ("trip.js", "places.js", "chat.js"))
+
+
+def test_about_has_credits_and_full_disclaimer(client):
+    html = client.get("/about").get_data(as_text=True)
+    assert "Weather data by Open-Meteo.com" in html and "CC BY 4.0" in html
+    assert "OpenStreetMap contributors" in html
     assert 'data-t="disclaimer"' in html
+
+
+def test_plan_page_keeps_open_meteo_credit(client):
+    assert "Weather data by Open-Meteo.com" in client.get("/plan").get_data(as_text=True)
+
+
+def test_site_redirects_to_day_plan(client):
+    r = client.get("/site")
+    assert r.status_code == 301 and r.headers["Location"].endswith("/plan")
 
 
 def test_json_declares_utf8(client, offline):

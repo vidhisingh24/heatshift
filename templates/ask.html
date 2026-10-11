@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Ask{% endblock %}
+{% block content %}
+<header class="page-head">
+  <h1 data-t="nav_ask_long"></h1>
+  <p class="context-line" id="context-line"></p>
+</header>
+
+<section class="card chat" id="chat-card" aria-labelledby="chat-title">
+  <div class="card-head">
+    <h2 id="chat-title" data-tc="title"></h2>
+    <span class="fine" data-tc="powered"></span>
+  </div>
+  <div class="chat-log" id="chat-log" aria-live="polite"></div>
+  <div class="chips" id="chat-chips"></div>
+  <form class="chat-form" id="chat-form">
+    <label class="sr-only" for="chat-input" data-tc="placeholder"></label>
+    <textarea id="chat-input" rows="2" maxlength="500"></textarea>
+    <div class="chat-bar">
+      <span class="fine" id="chat-count">0/500</span>
+      <button type="submit" class="btn btn-primary" id="chat-send" data-tc="send"></button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='chat.js') }}"></script>{% endblock %}
