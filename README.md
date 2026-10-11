@@ -46,9 +46,15 @@ Street vendors, delivery riders and construction workers cannot stay indoors. A 
 
 ## Screenshots
 
-| English: delivery rider, 18 Jun 2024 | Hindi: construction worker, 29 May 2024 |
-|---|---|
-| ![English](docs/screenshots/en-rider.png) | ![Hindi](docs/screenshots/hi-construction.png) |
+Captured from the live app on a 390px phone viewport:
+
+| First-visit setup | Plan with work hours | Safe-trip mode |
+|---|---|---|
+| ![Setup](docs/screenshots/1-setup.png) | ![Plan](docs/screenshots/2-plan.png) | ![Trip](docs/screenshots/3-trip.png) |
+
+| Water and shade near me | AI chat in Hindi (Amazon Bedrock) | Desktop |
+|---|---|---|
+| ![Places](docs/screenshots/4-places.png) | ![Chat](docs/screenshots/5-chat-hi.png) | ![Desktop](docs/screenshots/en-rider.png) |
 
 ## How it works
 
