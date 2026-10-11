@@ -73,6 +73,54 @@ button, select { font: inherit; color: inherit; }
 }
 .lang button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.link-btn { border: 0; background: none; padding: 6px 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- setup ---------- */
+.setup { padding: 28px 0 40px; }
+.setup-inner { max-width: 560px; }
+.setup-card { padding: 28px 24px; }
+.setup-card h1 { margin: 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+.setup-sub { margin: 6px 0 22px; color: var(--ink-2); font-size: 0.92rem; }
+.setup-card > .label { display: block; margin: 0 0 8px; }
+.setup-langs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.setup-roles { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 20px; }
+.big-choice {
+  display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 56px; padding: 12px 16px; cursor: pointer;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; font-size: 1rem; font-weight: 500; color: var(--ink);
+}
+.big-choice svg { width: 26px; height: 26px; }
+.role-choice { justify-content: flex-start; min-height: 64px; }
+.big-choice[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.setup-card .btn { margin-top: -4px; }
+.setup-card .hint { margin: 8px 0 18px; }
+.setup-hours { margin: 0 0 22px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.setup-hours summary { cursor: pointer; font-weight: 500; font-size: 0.9rem; }
+.setup-hours .hours-pick { margin-top: 12px; }
+.setup-hours .hint { margin: 8px 0 0; }
+.hours-pick { display: flex; align-items: center; gap: 8px; }
+.hours-pick label { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; flex: 1; }
+.hours-pick select { min-height: 40px; }
+.btn-wide { width: 100%; justify-content: center; min-height: 52px; font-size: 1rem; }
+.settings .work-hours { margin-top: 18px; margin-bottom: 0; }
+/* Phones: the plan comes first; settings (already chosen in setup) sit below it */
+@media (max-width: 959px) { .settings { order: 2; } }
+
+/* ---------- rule line + 24h bar ---------- */
+.rule-line { margin-top: 12px; font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; }
+.shift-warning { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: var(--danger-tint); color: #8f3c13; font-size: 0.88rem; font-weight: 500; }
+.shift-warning.is-ok { background: var(--safe-tint); color: #1f5c38; }
+.day-bar-wrap { margin-top: 20px; }
+.day-bar { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 2px; height: 22px; }
+.day-bar span { position: relative; display: block; border-radius: 2px; }
+.day-bar span.in-shift { box-shadow: inset 0 -4px 0 rgba(23, 22, 20, 0.55); }
+.day-bar span.is-now { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 1; }
+.now-tag { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-style: normal; font-size: 0.68rem; font-weight: 600; white-space: nowrap; }
+.day-axis { position: relative; height: 16px; margin-top: 4px; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.day-axis span { position: absolute; transform: translateX(-50%); }
+.day-axis span:first-child { transform: none; }
+.day-axis span:last-child { transform: translateX(-100%); }
+
 /* ---------- layout ---------- */
 .layout { display: grid; grid-template-columns: 1fr; gap: 16px; padding-top: 20px; padding-bottom: 32px; }
 .content { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
@@ -273,6 +321,8 @@ html:lang(hi) .advice-text { font-size: 1.15rem; line-height: 1.8; }
 /* ---------- larger screens ---------- */
 @media (min-width: 640px) {
   .card { padding: 24px; }
+  .setup-roles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .role-choice { flex-direction: column; justify-content: center; min-height: 96px; gap: 8px; text-align: center; }
   .overview-main { grid-template-columns: minmax(0, 1fr) minmax(0, 300px); align-items: end; }
   .hero-figure { font-size: 5rem; }
   .info-grid { grid-template-columns: 1fr 1fr; }
@@ -301,7 +351,7 @@ html:lang(hi) .advice-text { font-size: 1.15rem; line-height: 1.8; }
 @media print {
   @page { margin: 14mm; }
   body { background: #fff; font-size: 12px; }
-  .site-header, .settings, .actions, .table-wrap summary, .tooltip, .site-footer, .loading, .lang { display: none !important; }
+  .setup, .site-header, .settings, .actions, .table-wrap summary, .tooltip, .site-footer, .loading, .lang { display: none !important; }
   .layout { display: block; padding: 0; }
   .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; padding: 14px; }
   #plan { gap: 10px; }

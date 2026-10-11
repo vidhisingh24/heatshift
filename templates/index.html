@@ -27,6 +27,7 @@
     <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6h-3M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
     <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
     <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 9v6M14 9v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
     <symbol id="i-stop" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.6 5.6l12.8 12.8" stroke="currentColor" stroke-width="1.6"/></symbol>
   </svg>
 
@@ -39,14 +40,56 @@
           <span class="brand-sub" data-t="tagline"></span>
         </span>
       </a>
-      <div class="lang" role="group" aria-label="Language">
-        <button type="button" data-lang="en" lang="en">English</button>
-        <button type="button" data-lang="hi" lang="hi">हिंदी</button>
+      <div class="header-actions">
+        <button type="button" class="link-btn" id="change-setup" data-t="change"></button>
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" data-lang="en" lang="en">English</button>
+          <button type="button" data-lang="hi" lang="hi">हिंदी</button>
+        </div>
       </div>
     </div>
   </header>
 
-  <main class="container layout">
+  <!-- First-visit setup -->
+  <section class="setup" id="setup" hidden aria-labelledby="setup-title">
+    <div class="container setup-inner">
+      <div class="card setup-card">
+        <h1 id="setup-title" data-t="setup_title"></h1>
+        <p class="setup-sub" data-t="setup_sub"></p>
+
+        <p class="label" data-t="setup_lang"></p>
+        <div class="setup-langs" role="group">
+          <button type="button" class="big-choice" data-setup-lang="en" lang="en">English</button>
+          <button type="button" class="big-choice" data-setup-lang="hi" lang="hi">हिंदी</button>
+        </div>
+
+        <p class="label" data-t="work_as"></p>
+        <div class="setup-roles" id="setup-roles"></div>
+
+        <label class="field">
+          <span class="label" data-t="city"></span>
+          <select id="setup-city"></select>
+        </label>
+        <button type="button" class="btn" id="setup-locate">
+          <svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg><span data-t="use_location"></span>
+        </button>
+        <p class="hint" id="setup-locate-status" data-t="location_private"></p>
+
+        <details class="setup-hours">
+          <summary data-t="work_hours_optional"></summary>
+          <div class="hours-pick">
+            <label><span data-t="from"></span> <select id="setup-from"></select></label>
+            <label><span data-t="to"></span> <select id="setup-to"></select></label>
+          </div>
+          <p class="hint" data-t="work_hours_hint"></p>
+        </details>
+
+        <button type="button" class="btn btn-primary btn-wide" id="setup-done" data-t="setup_done"></button>
+      </div>
+    </div>
+  </section>
+
+  <main class="container layout" id="main">
     <!-- Settings -->
     <aside class="settings card" aria-label="Choose">
       <p class="eyebrow" data-t="settings"></p>
@@ -63,6 +106,14 @@
         <select id="day"></select>
       </label>
       <p class="hint" id="replay-note"></p>
+      <div class="field work-hours">
+        <span class="label" data-t="my_hours"></span>
+        <div class="hours-pick">
+          <select id="from-hour" aria-label="From"></select>
+          <span>–</span>
+          <select id="to-hour" aria-label="To"></select>
+        </div>
+      </div>
     </aside>
 
     <div class="content">
@@ -82,6 +133,8 @@
             <p class="meta-line" id="meta-line"></p>
             <span class="badge" id="mode-badge"></span>
           </div>
+          <p class="rule-line" id="rule-line"></p>
+          <p class="shift-warning" id="shift-warning" hidden></p>
           <div class="overview-main">
             <div class="headline">
               <span class="level-pill" id="level-pill"></span>
@@ -102,6 +155,10 @@
                 <dd id="water-value"></dd>
               </div>
             </dl>
+          </div>
+          <div class="day-bar-wrap">
+            <div class="day-bar" id="day-bar" role="img"></div>
+            <div class="day-axis" id="day-axis" aria-hidden="true"></div>
           </div>
         </section>
 
@@ -204,7 +261,8 @@
             <dt data-t="updated"></dt>
             <dd id="updated"></dd>
           </dl>
-          <p class="attribution"><a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>)</p>
+          <p class="attribution"><a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) · Places © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
+          <p class="attribution" data-t="method_line"></p>
         </section>
       </div>
 

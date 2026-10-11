@@ -49,6 +49,18 @@ def test_json_declares_utf8(client, offline):
     assert "charset=utf-8" in r.headers["Content-Type"]
 
 
+@pytest.mark.parametrize("path", ["/", "/health", "/api/options", "/static/app.js", "/static/style.css"])
+def test_every_response_declares_utf8(client, path):
+    r = client.get(path)
+    assert r.status_code == 200
+    assert "charset=utf-8" in r.headers["Content-Type"].lower()
+
+
+def test_options_include_city_coordinates(client):
+    delhi = client.get("/api/options").get_json()["cities"]["delhi"]
+    assert 28 < delhi["lat"] < 29 and 76 < delhi["lon"] < 78
+
+
 def test_options_lists_roles(client):
     body = client.get("/api/options").get_json()
     assert set(body["roles"]) == {"vendor", "rider", "construction"}

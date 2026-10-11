@@ -19,10 +19,54 @@ application.json.mimetype = "application/json; charset=utf-8"
 
 LANGS = ("en", "hi")
 ATTRIBUTION = "Weather data by Open-Meteo.com (CC BY 4.0)"
+_TEXT_TYPES = ("text/", "application/json", "application/javascript")
 
 
-def error(message, status=400):
-    return jsonify({"error": message}), status
+class ApiError(Exception):
+    def __init__(self, message, status=400):
+        super().__init__(message)
+        self.status = status
+
+
+@application.errorhandler(ApiError)
+def handle_api_error(e):
+    return jsonify({"error": str(e)}), e.status
+
+
+@application.after_request
+def utf8_everywhere(resp):
+    """Declare charset=utf-8 on every text response (Hindi must never be misread)."""
+    ctype = resp.headers.get("Content-Type", "")
+    if ctype.startswith(_TEXT_TYPES) and "charset" not in ctype.lower():
+        resp.headers["Content-Type"] = ctype + "; charset=utf-8"
+    return resp
+
+
+def load_plan(city_key, role, lang, date_str):
+    """Validate inputs, fetch weather and build the schedule. Raises ApiError on bad input."""
+    city_key = (city_key or "delhi").strip().lower()
+    role = (role or "rider").strip().lower()
+    lang = (lang or "en").strip().lower()
+    city = get_city(city_key)
+    if city is None:
+        raise ApiError(f"unknown city '{city_key}'; choose one of: {', '.join(CITIES)}")
+    profile = get_profile(role)
+    if profile is None:
+        raise ApiError(f"unknown role '{role}'; choose one of: {', '.join(PROFILES)}")
+    if lang not in LANGS:
+        raise ApiError(f"unknown lang '{lang}'; choose one of: {', '.join(LANGS)}")
+    try:
+        day = parse_date(date_str)
+        weather = get_hourly(city_key, city, day)
+    except ValueError as e:
+        raise ApiError(f"invalid date: {e}")
+    except WeatherError as e:
+        raise ApiError(str(e), 503)
+    rows, summary = build_schedule(weather["hours"], city, profile)
+    return {
+        "city_key": city_key, "city": city, "role": role, "profile": profile, "lang": lang,
+        "weather": weather, "rows": rows, "summary": summary,
+    }
 
 
 @application.get("/")
@@ -39,7 +83,10 @@ def health():
 def options():
     return jsonify({
         "cities": {
-            k: {"name_en": c["name_en"], "name_hi": c["name_hi"], "replay_days": c.get("replay_days", [])}
+            k: {
+                "name_en": c["name_en"], "name_hi": c["name_hi"], "lat": c["lat"], "lon": c["lon"],
+                "replay_days": c.get("replay_days", []),
+            }
             for k, c in CITIES.items()
         },
         "roles": {k: {"name_en": p["name_en"], "name_hi": p["name_hi"]} for k, p in PROFILES.items()},
@@ -49,45 +96,28 @@ def options():
 
 @application.get("/api/plan")
 def plan():
-    city_key = request.args.get("city", "delhi").strip().lower()
-    role = request.args.get("role", "rider").strip().lower()
-    lang = request.args.get("lang", "en").strip().lower()
-
-    city = get_city(city_key)
-    if city is None:
-        return error(f"unknown city '{city_key}'; choose one of: {', '.join(CITIES)}")
-    profile = get_profile(role)
-    if profile is None:
-        return error(f"unknown role '{role}'; choose one of: {', '.join(PROFILES)}")
-    if lang not in LANGS:
-        return error(f"unknown lang '{lang}'; choose one of: {', '.join(LANGS)}")
-    try:
-        day = parse_date(request.args.get("date"))
-        weather = get_hourly(city_key, city, day)
-    except ValueError as e:
-        return error(f"invalid date: {e}")
-    except WeatherError as e:
-        return error(str(e), 503)
-
-    rows, summary = build_schedule(weather["hours"], city, profile)
+    a = request.args
+    p = load_plan(a.get("city"), a.get("role"), a.get("lang"), a.get("date"))
+    city, profile, lang, weather, summary = p["city"], p["profile"], p["lang"], p["weather"], p["summary"]
     message, message_source = get_message(
-        summary, profile, city, lang, (city_key, role, lang, weather["date"], weather["mode"]),
+        summary, profile, city, lang, (p["city_key"], p["role"], lang, weather["date"], weather["mode"]),
     )
     log.info("plan city=%s role=%s lang=%s date=%s mode=%s level=%s message_source=%s",
-             city_key, role, lang, weather["date"], weather["mode"], summary["worst_level"], message_source)
+             p["city_key"], p["role"], lang, weather["date"], weather["mode"], summary["worst_level"], message_source)
     return jsonify({
-        "city": city_key,
+        "city": p["city_key"],
         "city_name": city[f"name_{lang}"],
-        "role": role,
+        "role": p["role"],
         "role_name": profile[f"name_{lang}"],
         "lang": lang,
         "date": weather["date"],
         "mode": weather["mode"],
-        "hours": rows,
+        "hours": p["rows"],
         "summary": summary,
         "message": message,
         "message_source": message_source,
         "cutoffs_c": {k: v for k, v in city["hi_cutoffs_c"].items() if not k.startswith("_")},
+        "imd_floor_c": {k: v for k, v in city["imd_floor_c"].items() if not k.startswith("_")},
         "data_source": weather["source"],
         "attribution": ATTRIBUTION,
         "data_fetched_at": weather["fetched_at"],

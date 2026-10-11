@@ -16,7 +16,8 @@
 
   var $ = function (id) { return document.getElementById(id); };
 
-  var state = { role: "rider", lang: "en", city: "delhi", date: "2024-06-18" };
+  // from/to: optional work hours (-1 = not set). lat/lon: optional, kept only in this browser.
+  var state = { role: "rider", lang: "en", city: "delhi", date: "2024-06-18", from: -1, to: -1, lat: null, lon: null };
   var options = null;
   var plan = null;
   var requestId = 0;
@@ -72,6 +73,34 @@
     if (!windows.length) return t("avoid_none");
     return windows.map(function (w) { return hhmm(w[0]) + "–" + hhmm(w[1]); }).join(state.lang === "hi" ? " और " : ", ");
   }
+  function hasShift() { return state.from >= 0 && state.to > state.from; }
+  function inShift(h) { return hasShift() && h >= state.from && h < state.to; }
+  function groupHours(hrs) {
+    var out = [];
+    hrs.forEach(function (h) {
+      var last = out[out.length - 1];
+      if (last && last[1] === h) last[1] = h + 1; else out.push([h, h + 1]);
+    });
+    return out;
+  }
+  function saveProfile() {
+    store("profile", JSON.stringify({ role: state.role, city: state.city, lang: state.lang, from: state.from, to: state.to }));
+  }
+  function loadProfile() {
+    try {
+      var p = JSON.parse(recall("profile") || "null");
+      if (p) {
+        if (ROLE_ORDER.indexOf(p.role) >= 0) state.role = p.role;
+        if (p.lang === "en" || p.lang === "hi") state.lang = p.lang;
+        if (p.city) state.city = p.city;
+        if (typeof p.from === "number") state.from = p.from;
+        if (typeof p.to === "number") state.to = p.to;
+      }
+      var loc = JSON.parse(recall("loc") || "null");
+      if (loc && typeof loc.lat === "number") { state.lat = loc.lat; state.lon = loc.lon; }
+      return !!p;
+    } catch (e) { return false; }
+  }
 
   function actionText(h) {
     if (h.avoid) return h.avoid_action === "shade" ? t("do_shade") : t("do_stop");
@@ -118,6 +147,93 @@
     renderRoles();
     renderCities();
     renderDays();
+    renderHourSelects();
+    renderSetup();
+    document.dispatchEvent(new CustomEvent("hs:lang"));
+  }
+
+  function hourOptions(sel, first, last, value) {
+    sel.textContent = "";
+    var none = el("option", "", t("any_hours"));
+    none.value = "-1";
+    sel.appendChild(none);
+    for (var h = first; h <= last; h++) {
+      var o = el("option", "", hhmm(h));
+      o.value = String(h);
+      sel.appendChild(o);
+    }
+    sel.value = String(value);
+  }
+
+  function renderHourSelects() {
+    hourOptions($("from-hour"), 0, 23, state.from);
+    hourOptions($("to-hour"), 1, 24, state.to);
+    hourOptions($("setup-from"), 0, 23, state.from);
+    hourOptions($("setup-to"), 1, 24, state.to);
+  }
+
+  // ---------- first-visit setup ----------
+
+  function renderSetup() {
+    document.querySelectorAll("[data-setup-lang]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-setup-lang") === state.lang));
+    });
+    var box = $("setup-roles");
+    var roles = roleList();
+    box.textContent = "";
+    ROLE_ORDER.forEach(function (key) {
+      var b = el("button", "big-choice role-choice");
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(key === state.role));
+      b.appendChild(icon("i-" + key));
+      b.appendChild(el("span", "", roles[key]["name_" + state.lang]));
+      b.addEventListener("click", function () { state.role = key; renderSetup(); });
+      box.appendChild(b);
+    });
+    var sel = $("setup-city");
+    sel.textContent = "";
+    var cities = cityList();
+    Object.keys(cities).sort(function (a, b) { return a === "delhi" ? -1 : b === "delhi" ? 1 : a < b ? -1 : 1; })
+      .forEach(function (key) {
+        var o = el("option", "", cities[key]["name_" + state.lang]);
+        o.value = key;
+        sel.appendChild(o);
+      });
+    sel.value = state.city;
+  }
+
+  function showSetup(show) {
+    $("setup").hidden = !show;
+    $("main").hidden = show;
+    $("change-setup").hidden = show;
+    if (show) { renderSetup(); window.scrollTo(0, 0); }
+  }
+
+  function nearestCity(lat, lon) {
+    var cities = cityList(), best = null, bestD = Infinity;
+    Object.keys(cities).forEach(function (k) {
+      var c = cities[k];
+      if (typeof c.lat !== "number") return;
+      var d = Math.pow(c.lat - lat, 2) + Math.pow((c.lon - lon) * Math.cos(lat * Math.PI / 180), 2);
+      if (d < bestD) { bestD = d; best = k; }
+    });
+    return best;
+  }
+
+  function locate(statusEl, done) {
+    if (!navigator.geolocation) { statusEl.textContent = t("location_failed"); return; }
+    statusEl.textContent = t("locating");
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      state.lat = Math.round(pos.coords.latitude * 10000) / 10000;
+      state.lon = Math.round(pos.coords.longitude * 10000) / 10000;
+      store("loc", JSON.stringify({ lat: state.lat, lon: state.lon }));
+      var near = nearestCity(state.lat, state.lon);
+      if (near) state.city = near;
+      statusEl.textContent = fill(t("location_done"), { city: cityList()[state.city]["name_" + state.lang] });
+      if (done) done();
+    }, function () {
+      statusEl.textContent = t("location_failed");
+    }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
   }
 
   function renderRoles() {
@@ -134,7 +250,7 @@
       b.addEventListener("click", function () {
         if (state.role === key) return;
         state.role = key;
-        store("role", key);
+        saveProfile();
         renderRoles();
         load();
       });
@@ -231,6 +347,7 @@
     $("data-source").textContent = plan.data_source;
     $("updated").textContent = formatStamp(plan.data_fetched_at);
     $("print-title").textContent = fill(t("print_title"), { role: plan.role_name, city: plan.city_name, date: formatDate(plan.date) });
+    document.dispatchEvent(new CustomEvent("hs:plan"));
   }
 
   function renderOverview() {
@@ -250,10 +367,57 @@
       time: s.peak_time, temp: Math.round(s.peak_air_c), rh: s.peak_rh,
     });
 
+    // One-line rule: "Avoid 12:00–16:00. Best: 05:00–08:00, 18:00–22:00."
+    var avoid = s.avoid_windows.length ? windowsText(s.avoid_windows) : "";
+    var best = s.best_windows.length ? windowsText(s.best_windows) : "";
+    $("rule-line").textContent = avoid && best ? fill(t("rule_avoid_best"), { avoid: avoid, best: best })
+      : avoid ? fill(t("rule_avoid_only"), { avoid: avoid })
+      : fill(t("rule_best_only"), { best: best || "05:00–22:00" });
+
+    // Danger hours inside the worker's own shift
+    var warn = $("shift-warning");
+    if (hasShift()) {
+      var shift = hhmm(state.from) + "–" + hhmm(state.to);
+      var bad = plan.hours.filter(function (h) {
+        return inShift(h.hour) && LEVELS.indexOf(h.level) >= 2;
+      }).map(function (h) { return h.hour; });
+      warn.hidden = false;
+      warn.classList.toggle("is-ok", !bad.length);
+      warn.textContent = bad.length
+        ? fill(t("shift_warning"), { shift: shift, n: bad.length, w: windowsText(groupHours(bad)) })
+        : fill(t("shift_ok"), { shift: shift });
+    } else {
+      warn.hidden = true;
+    }
+
+    renderDayBar();
+
     $("avoid-label").textContent = t("avoid_label")[plan.role];
     $("avoid-value").textContent = windowsText(s.avoid_windows);
     $("rest-value").textContent = s.max_rest_min ? fill(t("min"), { m: s.max_rest_min }) : t("none");
     $("water-value").textContent = fill(t("every_min"), { m: s.min_water_every_min });
+  }
+
+  function renderDayBar() {
+    var bar = $("day-bar");
+    var axis = $("day-axis");
+    var nh = nowHour();
+    bar.textContent = "";
+    axis.textContent = "";
+    bar.setAttribute("aria-label", t("day_bar_label") + ": " + plan.hours.map(function (h) {
+      return h.time + " " + t("levels")[h.level];
+    }).join(", "));
+    plan.hours.forEach(function (h) {
+      var c = el("span", "fill-" + h.level + (h.hour === nh ? " is-now" : "") + (inShift(h.hour) ? " in-shift" : ""));
+      c.title = h.time + " · " + t("levels")[h.level] + " · " + Math.round(h.heat_index_c) + "°C";
+      if (h.hour === nh) c.appendChild(el("i", "now-tag", t("now")));
+      bar.appendChild(c);
+    });
+    [0, 6, 12, 18, 24].forEach(function (h) {
+      var tick = el("span", "", pad(h));
+      tick.style.left = (h / 24 * 100) + "%";
+      axis.appendChild(tick);
+    });
   }
 
   function renderAdvice() {
@@ -571,20 +735,23 @@
 
   // ---------- init ----------
 
+  // Returns true when the setup screen can be skipped (saved profile, or a shared link with a role).
   function readInitialState() {
+    var saved = loadProfile();
     var p = new URLSearchParams(location.search);
-    var role = p.get("role") || recall("role");
-    var lang = p.get("lang") || recall("lang");
+    var role = p.get("role");
+    var lang = p.get("lang");
     var date = p.get("date");
     if (ROLE_ORDER.indexOf(role) >= 0) state.role = role;
     if (lang === "en" || lang === "hi") state.lang = lang;
     if (p.get("city")) state.city = p.get("city");
     if (date === "today") state.date = "";
     else if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) state.date = date;
+    return saved || ROLE_ORDER.indexOf(role) >= 0;
   }
 
   function init() {
-    readInitialState();
+    var skipSetup = readInitialState();
     applyText();
 
     document.querySelectorAll(".lang button").forEach(function (b) {
@@ -592,16 +759,47 @@
         var lang = b.getAttribute("data-lang");
         if (lang === state.lang) return;
         state.lang = lang;
-        store("lang", lang);
+        saveProfile();
         applyText();
-        load();
+        if (!$("main").hidden) load();
       });
     });
+
+    // Setup screen
+    document.querySelectorAll("[data-setup-lang]").forEach(function (b) {
+      b.addEventListener("click", function () { state.lang = b.getAttribute("data-setup-lang"); applyText(); });
+    });
+    $("setup-city").addEventListener("change", function (e) { state.city = e.target.value; });
+    $("setup-from").addEventListener("change", function (e) { state.from = parseInt(e.target.value, 10); });
+    $("setup-to").addEventListener("change", function (e) { state.to = parseInt(e.target.value, 10); });
+    $("setup-locate").addEventListener("click", function () {
+      locate($("setup-locate-status"), function () { $("setup-city").value = state.city; });
+    });
+    $("setup-done").addEventListener("click", function () {
+      var days = currentCity().replay_days || [];
+      if (state.date !== "" && days.length && !days.some(function (d) { return d.date === state.date; })) state.date = days[0].date;
+      saveProfile();
+      applyText();
+      showSetup(false);
+      load();
+    });
+    $("change-setup").addEventListener("click", function () { showSetup(true); });
+
+    // Work hours in the sidebar
+    function onHours() {
+      state.from = parseInt($("from-hour").value, 10);
+      state.to = parseInt($("to-hour").value, 10);
+      saveProfile();
+      if (plan) { renderOverview(); renderShift(); }
+    }
+    $("from-hour").addEventListener("change", onHours);
+    $("to-hour").addEventListener("change", onHours);
     $("day").addEventListener("change", function (e) { state.date = e.target.value; renderDays(); load(); });
     $("city").addEventListener("change", function (e) {
       state.city = e.target.value;
       var days = currentCity().replay_days || [];
       if (state.date !== "" && days.length) state.date = days[0].date;
+      saveProfile();
       renderDays();
       load();
     });
@@ -627,11 +825,19 @@
 
     fetch("/api/options")
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (data) { if (data) { options = data; renderRoles(); renderCities(); renderDays(); } })
+      .then(function (data) { if (data) { options = data; renderRoles(); renderCities(); renderDays(); renderSetup(); } })
       .catch(function () { /* built-in defaults are fine */ });
 
-    load();
+    if (skipSetup) { showSetup(false); load(); } else { showSetup(true); }
   }
+
+  // Shared with trip.js, places.js and chat.js
+  window.HS = {
+    state: state,
+    plan: function () { return plan; },
+    t: t, fill: fill, el: el, icon: icon, levelIcon: levelIcon, hhmm: hhmm, pad: pad,
+    cityList: cityList, nowHour: nowHour, locate: locate, LEVELS: LEVELS,
+  };
 
   init();
 })();
