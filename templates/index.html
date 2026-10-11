@@ -183,6 +183,23 @@
           </div>
         </section>
 
+        <!-- Safe trip -->
+        <section class="card trip" id="trip-card" aria-labelledby="trip-title">
+          <div class="card-head">
+            <h2 id="trip-title" data-tr="title"></h2>
+          </div>
+          <form class="trip-form" id="trip-form">
+            <label><span data-tr="go_at"></span>
+              <select id="trip-start"></select>
+            </label>
+            <label><span data-tr="for"></span>
+              <select id="trip-hours"></select>
+            </label>
+            <button type="submit" class="btn btn-primary" data-tr="check"></button>
+          </form>
+          <div id="trip-result" aria-live="polite"></div>
+        </section>
+
         <!-- Shift plan -->
         <section class="card">
           <div class="card-head">
@@ -283,5 +300,6 @@
 
   <script src="{{ url_for('static', filename='i18n.js') }}"></script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="{{ url_for('static', filename='trip.js') }}"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from flask import Flask, jsonify, render_template, request
 
@@ -7,7 +7,13 @@ from heatshift.advice import get_message
 from heatshift.cities import CITIES, get_city
 from heatshift.profiles import PROFILES, get_profile
 from heatshift.schedule import build_schedule
-from heatshift.weather import WeatherError, get_hourly, parse_date
+from heatshift.trip import parse_hours, parse_start, plan_trip
+from heatshift.weather import WeatherError, city_today, get_hourly, parse_date
+
+
+def city_hour(city):
+    tz = timezone(timedelta(minutes=city["utc_offset_minutes"]))
+    return datetime.now(tz).hour
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("heatshift")
@@ -122,6 +128,32 @@ def plan():
         "attribution": ATTRIBUTION,
         "data_fetched_at": weather["fetched_at"],
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    })
+
+
+def trip_for(p, start, hours):
+    """Safe-trip assessment for a loaded plan. Past hours are not suggested on today's forecast."""
+    weather = p["weather"]
+    earliest = 0
+    if weather["mode"] == "forecast" and weather["date"] == city_today(p["city"]).isoformat():
+        earliest = city_hour(p["city"])
+    return plan_trip(p["rows"], p["role"], p["lang"], start, hours, earliest=earliest)
+
+
+@application.get("/api/trip")
+def trip():
+    a = request.args
+    p = load_plan(a.get("city"), a.get("role"), a.get("lang"), a.get("date"))
+    try:
+        start = parse_start(a.get("start"))
+        hours = parse_hours(a.get("hours"))
+    except ValueError as e:
+        raise ApiError(str(e))
+    result = trip_for(p, start, hours)
+    log.info("trip city=%s role=%s start=%s hours=%s risk=%s", p["city_key"], p["role"], start, hours, result["risk_level"])
+    return jsonify({
+        "city": p["city_key"], "role": p["role"], "lang": p["lang"],
+        "date": p["weather"]["date"], "mode": p["weather"]["mode"], **result,
     })
 
 

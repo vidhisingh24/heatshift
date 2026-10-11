@@ -229,6 +229,38 @@ html:lang(hi) .advice-text { font-size: 1.15rem; line-height: 1.8; }
 .btn-quiet { border-color: transparent; background: transparent; color: var(--ink-2); }
 .btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
 
+/* ---------- safe trip ---------- */
+.trip-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+.trip-form label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 500; color: var(--ink-2); }
+.trip-form .btn { grid-column: 1 / -1; justify-content: center; min-height: 44px; }
+#trip-result:not(:empty) { margin-top: 18px; }
+.trip-risk { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.trip-window { font-weight: 600; font-variant-numeric: tabular-nums; }
+.trip-alt { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--safe-tint); color: #1f4a30; font-size: 0.92rem; }
+.trip-alt.is-none { background: var(--surface-2); color: var(--ink-2); }
+.trip-alt-title { font-weight: 600; margin-bottom: 2px; }
+.trip-sub { margin: 18px 0 8px; }
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.checklist li { position: relative; padding-left: 26px; font-size: 0.92rem; }
+.checklist li::before {
+  content: ""; position: absolute; left: 0; top: 3px; width: 16px; height: 16px; border-radius: 4px;
+  border: 1.5px solid var(--line-strong); background: var(--surface);
+}
+.stop-box { margin-top: 18px; border: 1px solid #e3c4bd; border-radius: 12px; overflow: hidden; }
+.stop-part { padding: 12px 14px; font-size: 0.9rem; }
+.stop-part + .stop-part { border-top: 1px solid #e3c4bd; }
+.stop-title { font-weight: 700; margin-bottom: 2px; }
+.stop-do { margin-top: 4px; color: var(--ink-2); }
+.stop-emergency { background: #8b2a1f; color: #fff; }
+.stop-emergency .stop-do { color: #f6e3df; }
+.stop-box.is-prominent { border-width: 2px; border-color: #8b2a1f; }
+.call-row { display: flex; gap: 8px; margin-top: 10px; }
+.call-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 72px; min-height: 40px; padding: 6px 14px;
+  background: #fff; color: #8b2a1f; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 1rem;
+}
+.trip-sources { margin-top: 12px; }
+
 /* ---------- shift plan ---------- */
 .shift-bar { display: flex; gap: 2px; height: 14px; }
 .shift-bar span { display: block; height: 100%; }
