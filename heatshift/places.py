@@ -5,13 +5,17 @@ Privacy: coordinates are used only for this lookup. They are never logged or sto
 Data © OpenStreetMap contributors, ODbL.
 """
 import json
+import logging
 import math
 import time
 from pathlib import Path
 
 import requests
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_URLS = (  # main instance first, then a public mirror
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+)
 USER_AGENT = "HeatShift/1.0 (heat-safety prototype for outdoor workers; https://github.com/vidhisingh24/heatshift)"
 TIMEOUT_S = 8
 CACHE_TTL_S = 600
@@ -38,6 +42,7 @@ KINDS = {
 CATEGORIES = ("drink", "buy", "shade")
 
 _cache = {}  # (lat3, lon3, radius) -> (expires_at, result)
+log = logging.getLogger(__name__)
 
 
 class PlacesError(Exception):
@@ -141,13 +146,24 @@ def find_places(lat, lon, radius=1000):
     if hit and hit[0] > time.time():
         return hit[1]
 
-    source = "openstreetmap"
-    try:
-        resp = requests.post(OVERPASS_URL, data={"data": build_query(lat, lon, radius)},
-                             headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT_S)
-        resp.raise_for_status()
-        elements = resp.json().get("elements", [])
-    except (requests.RequestException, ValueError):
+    source, elements, reasons = "openstreetmap", None, []
+    deadline = time.time() + 2 * TIMEOUT_S
+    for url in OVERPASS_URLS:
+        remaining = deadline - time.time()
+        if remaining < 2:
+            break
+        try:
+            resp = requests.post(url, data={"data": build_query(lat, lon, radius)},
+                                 headers={"User-Agent": USER_AGENT}, timeout=min(TIMEOUT_S, remaining))
+            resp.raise_for_status()
+            elements = resp.json().get("elements", [])
+            break
+        except (requests.RequestException, ValueError) as e:
+            status = getattr(getattr(e, "response", None), "status_code", None)
+            reasons.append(f"{url.split('/')[2]}: {type(e).__name__}{f' {status}' if status else ''}")
+            log.warning("Overpass failed (%s)", reasons[-1])  # no coordinates in logs
+
+    if elements is None:
         sample = _load_sample()
         c = sample["center"]
         if distance_m(lat, lon, c["lat"], c["lon"]) > SAMPLE_MAX_KM * 1000:
@@ -164,5 +180,7 @@ def find_places(lat, lon, radius=1000):
         "attribution": "© OpenStreetMap contributors (ODbL)",
         "fetched_at": int(time.time()),
     }
+    if reasons:
+        result["fallback_reason"] = "; ".join(reasons)
     _cache[key] = (time.time() + (CACHE_TTL_S if source == "openstreetmap" else 60), result)
     return result
