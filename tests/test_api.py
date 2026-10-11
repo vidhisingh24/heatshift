@@ -31,6 +31,12 @@ def test_plan_returns_schedule_and_message(client, offline):
     assert "Open-Meteo" in body["attribution"]
 
 
+def test_plan_exposes_thresholds_for_why_line(client, offline):
+    body = client.get("/api/plan?date=2024-06-18").get_json()
+    assert body["imd_floor_c"] == {"danger": 45.0, "extreme": 47.0}
+    assert set(body["cutoffs_c"]) == {"caution", "danger", "extreme"}
+
+
 def test_plan_in_hindi(client, offline):
     body = client.get("/api/plan?role=vendor&lang=hi&date=2024-06-18").get_json()
     assert body["role_name"] == "रेहड़ी-पटरी विक्रेता"

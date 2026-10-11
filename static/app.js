@@ -391,11 +391,32 @@
     }
 
     renderDayBar();
+    renderWhy();
 
     $("avoid-label").textContent = t("avoid_label")[plan.role];
     $("avoid-value").textContent = windowsText(s.avoid_windows);
     $("rest-value").textContent = s.max_rest_min ? fill(t("min"), { m: s.max_rest_min }) : t("none");
     $("water-value").textContent = fill(t("every_min"), { m: s.min_water_every_min });
+  }
+
+  // "Why this level?": heat index from air + humidity, and whether the IMD air-temperature rule decided it.
+  function levelFromHi(hi) {
+    var c = plan.cutoffs_c;
+    return hi >= c.extreme ? "extreme" : hi >= c.danger ? "danger" : hi >= c.caution ? "caution" : "safe";
+  }
+  function renderWhy() {
+    var worst = plan.summary.worst_level;
+    var h = plan.hours.filter(function (r) { return r.level === worst; })
+      .sort(function (a, b) { return b.heat_index_c - a.heat_index_c; })[0];
+    if (!h) { $("why-line").textContent = ""; return; }
+    var floor = plan.imd_floor_c || {};
+    var byHi = levelFromHi(h.heat_index_c);
+    var imd = LEVELS.indexOf(worst) > LEVELS.indexOf(byHi);
+    var vars = {
+      level: t("levels")[worst], time: h.time, air: Math.round(h.temp_c), rh: h.rh, hi: Math.round(h.heat_index_c),
+      hilevel: t("levels")[byHi], floor: worst === "extreme" ? floor.extreme : floor.danger,
+    };
+    $("why-line").textContent = fill(t(imd ? "why_imd" : "why_hi"), vars);
   }
 
   function renderDayBar() {
