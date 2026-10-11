@@ -1,6 +1,6 @@
 # HeatShift: submission writeup
 
-**Track:** Heat and Water · **Live:** http://heatshift-env.eba-umys9bjc.ap-southeast-2.elasticbeanstalk.com · **Repo:** https://github.com/vidhisingh24/heatshift
+**Track:** Heat and Water · **Live:** https://d2rsnmdxkrj7b8.cloudfront.net · **Repo:** https://github.com/vidhisingh24/heatshift
 
 ## The problem
 

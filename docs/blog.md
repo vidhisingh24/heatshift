@@ -2,7 +2,7 @@
 
 *By Vidhi Singh · WeMakeDevs x AWS Environmental Hacks (Heat and Water track) · October 2026*
 
-**Live app:** http://heatshift-env.eba-umys9bjc.ap-southeast-2.elasticbeanstalk.com · **Code:** https://github.com/vidhisingh24/heatshift · **Demo:** *(YouTube link)*
+**Live app:** https://d2rsnmdxkrj7b8.cloudfront.net · **Code:** https://github.com/vidhisingh24/heatshift · **Demo:** *(YouTube link)*
 
 ---
 

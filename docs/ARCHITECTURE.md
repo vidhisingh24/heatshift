@@ -2,6 +2,21 @@
 
 One Flask app (`application.py`) on AWS Elastic Beanstalk serves the pages and a small JSON API ([API.md](API.md)). There are no accounts and no database.
 
+## URLs
+
+| URL | What it is |
+|---|---|
+| **https://d2rsnmdxkrj7b8.cloudfront.net** | Public link. Amazon CloudFront (distribution `E2W7JABBTC55GT`) provides HTTPS, which browsers require before they share a phone's location. |
+| http://heatshift-env.eba-umys9bjc.ap-southeast-2.elasticbeanstalk.com | Fallback: the Elastic Beanstalk environment directly, over HTTP. Everything works here except "Use my location", which falls back to the city centre. |
+
+CloudFront settings:
+- **Origin:** the Beanstalk CNAME, HTTP only.
+- **Viewers:** redirected to HTTPS.
+- **Methods:** all allowed (POST is needed for `/api/chat`).
+- **Policies:** managed cache policy **CachingDisabled**, managed origin request policy **AllViewer**.
+- **Other:** compression on, price class 100.
+- **Rate limit:** the client IP stays the first `X-Forwarded-For` entry, so the chat rate limit still applies per user.
+
 ## Pages
 
 | Path | What it shows | Data it loads |

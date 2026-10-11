@@ -2,7 +2,7 @@
 
 **Hour-by-hour heat work plans for India's outdoor workers: when to work, rest, drink water or stay out of the sun, in English and Hindi.**
 
-[Live demo](http://heatshift-env.eba-umys9bjc.ap-southeast-2.elasticbeanstalk.com) · [Demo video](#) <!-- add YouTube link --> · [Writeup](docs/writeup.md)
+[Live demo](https://d2rsnmdxkrj7b8.cloudfront.net) · [Demo video](#) <!-- add YouTube link --> · [Writeup](docs/writeup.md)
 
 > Prototype, not medical advice. In an emergency call **108** (ambulance) or **112**.
 
@@ -37,9 +37,8 @@ India's heat action plans warn about temperature but rarely tell a street vendor
 
 ```mermaid
 flowchart LR
-  U[Phone browser<br/>profile + location in localStorage only] -->|/api/plan · /api/trip| EB[Flask app on<br/>AWS Elastic Beanstalk<br/>EC2 t3.small, Sydney]
-  U -->|/api/places| EB
-  U -->|/api/chat| EB
+  U[Phone browser<br/>profile + location in localStorage only] -->|HTTPS| CF[Amazon CloudFront<br/>no caching]
+  CF -->|/api/plan · trip · places · chat| EB[Flask app on<br/>AWS Elastic Beanstalk<br/>EC2 t3.small, Sydney]
   EB -->|hourly temp + humidity| OM[Open-Meteo<br/>forecast / archive]
   EB -->|water, shops, shade| OSM[OpenStreetMap<br/>Overpass API]
   EB --> CORE[Heat index, levels,<br/>shift plan, trip checklist]
@@ -51,6 +50,7 @@ flowchart LR
 
 | AWS piece | Role |
 |---|---|
+| **CloudFront** | HTTPS front door, needed for phone location; caching off, all methods forwarded |
 | **Elastic Beanstalk** (Python 3.12, AL2023, ap-southeast-2) | Hosts the Flask app; deployed by CLI with `deploy.ps1` |
 | **Strands Agents** (AWS open source) | Daily-advice agent, and a chat agent that calls our plan, trip and places tools |
 | **Amazon Bedrock**, Nova Lite (in-Region, Sydney) | Runs both agents, in English and Hindi, with a template fallback |
