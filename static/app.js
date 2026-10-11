@@ -5,6 +5,9 @@
   var LEVELS = ["safe", "caution", "danger", "extreme"];
   var WORK_DAY = [5, 21];
   var CITY_TZ = "Asia/Kolkata";
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var ROLE_ORDER = ["vendor", "rider", "construction"];
+  var LEVEL_TINT = { safe: "#e9f2ec", caution: "#fbf3e0", danger: "#f9ebe3", extreme: "#f4e6e4" };
   var MODEL_NAMES = {
     "amazon.nova-lite-v1:0": "Amazon Nova Lite",
     "amazon.nova-micro-v1:0": "Amazon Nova Micro",
@@ -13,13 +16,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
 
-  var state = {
-    role: "rider",
-    lang: "en",
-    city: "delhi",
-    date: "2024-06-18",
-    showAll: false,
-  };
+  var state = { role: "rider", lang: "en", city: "delhi", date: "2024-06-18" };
   var options = null;
   var plan = null;
   var requestId = 0;
@@ -31,72 +28,58 @@
       return vars && vars[k] !== undefined ? vars[k] : "";
     });
   }
-
   function t(key) { return T[state.lang][key]; }
-
   function el(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) e.className = cls;
     if (text !== undefined) e.textContent = text;
     return e;
   }
-
-  function store(key, value) {
-    try { localStorage.setItem("heatshift." + key, value); } catch (e) { /* storage blocked: ignore */ }
+  function svgEl(tag, attrs) {
+    var e = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    return e;
   }
-
-  function recall(key) {
-    try { return localStorage.getItem("heatshift." + key); } catch (e) { return null; }
+  function icon(id, cls) {
+    var s = svgEl("svg", { "aria-hidden": "true", "class": cls || "ico" });
+    var u = svgEl("use", { href: "#" + id });
+    s.appendChild(u);
+    return s;
   }
-
+  function levelIcon(level) { return icon("i-" + level, "lv-" + level); }
+  function store(key, value) { try { localStorage.setItem("heatshift." + key, value); } catch (e) { /* blocked */ } }
+  function recall(key) { try { return localStorage.getItem("heatshift." + key); } catch (e) { return null; } }
   function locale() { return state.lang === "hi" ? "hi-IN" : "en-IN"; }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function hhmm(h) { return pad(h % 24) + ":00"; }
 
   function formatDate(iso) {
     var d = new Date(iso + "T12:00:00+05:30");
     return new Intl.DateTimeFormat(locale(), { day: "numeric", month: "short", year: "numeric", timeZone: CITY_TZ }).format(d);
   }
-
   function formatStamp(iso) {
-    var d = new Date(iso);
     return new Intl.DateTimeFormat(locale(), {
       day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: CITY_TZ,
-    }).format(d) + " IST";
+    }).format(new Date(iso)) + " IST";
   }
-
-  function cityToday() {
-    return new Intl.DateTimeFormat("en-CA", { timeZone: CITY_TZ }).format(new Date());
-  }
-
+  function cityToday() { return new Intl.DateTimeFormat("en-CA", { timeZone: CITY_TZ }).format(new Date()); }
   function cityHour() {
     return parseInt(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hourCycle: "h23", timeZone: CITY_TZ }).format(new Date()), 10);
   }
+  function nowHour() { return plan && plan.date === cityToday() ? cityHour() : -1; }
 
   function windowsText(windows) {
     if (!windows.length) return t("avoid_none");
-    var join = state.lang === "hi" ? " और " : ", ";
-    return windows.map(function (w) {
-      return pad(w[0]) + ":00–" + pad(w[1]) + ":00";
-    }).join(join);
+    return windows.map(function (w) { return hhmm(w[0]) + "–" + hhmm(w[1]); }).join(state.lang === "hi" ? " और " : ", ");
   }
 
-  function pad(n) { return (n < 10 ? "0" : "") + n; }
-
-  // ---------- static text ----------
-
-  function applyText() {
-    document.documentElement.lang = state.lang;
-    document.querySelectorAll("[data-t]").forEach(function (node) {
-      var v = t(node.getAttribute("data-t"));
-      if (typeof v === "string") node.textContent = v;
-    });
-    document.querySelectorAll(".lang button").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.getAttribute("data-lang") === state.lang));
-    });
-    $("toggle-hours").textContent = state.showAll ? t("show_work") : t("show_all");
-    renderRoles();
-    renderCities();
-    renderDays();
+  function actionText(h) {
+    if (h.avoid) return h.avoid_action === "shade" ? t("do_shade") : t("do_stop");
+    if (h.rest_min) return fill(t("do_rest"), { m: h.rest_min });
+    return t("do_work");
   }
+
+  // ---------- data shown before /api/options arrives ----------
 
   function cityList() {
     return options ? options.cities : {
@@ -109,51 +92,45 @@
       },
     };
   }
-
+  function roleList() {
+    return options ? options.roles : {
+      vendor: { name_en: "Street vendor", name_hi: "रेहड़ी-पटरी विक्रेता" },
+      rider: { name_en: "Delivery rider", name_hi: "डिलीवरी राइडर" },
+      construction: { name_en: "Construction worker", name_hi: "निर्माण मज़दूर" },
+    };
+  }
   function currentCity() {
     var cities = cityList();
     return cities[state.city] || cities[Object.keys(cities)[0]];
   }
 
-  function renderDays() {
-    var sel = $("day");
-    var city = currentCity();
-    sel.textContent = "";
-    var found = false;
-    (city.replay_days || []).forEach(function (d) {
-      var o = el("option", "", fill(t("replay"), { label: d["label_" + state.lang] }));
-      o.value = d.date;
-      if (d.date === state.date) found = true;
-      sel.appendChild(o);
+  // ---------- static text & controls ----------
+
+  function applyText() {
+    document.documentElement.lang = state.lang;
+    document.querySelectorAll("[data-t]").forEach(function (node) {
+      var v = t(node.getAttribute("data-t"));
+      if (typeof v === "string") node.textContent = v;
     });
-    var today = el("option", "", t("today"));
-    today.value = "";
-    sel.appendChild(today);
-    if (state.date === "") found = true;
-    if (!found) {  // a custom date from the URL
-      var c = el("option", "", state.date);
-      c.value = state.date;
-      sel.appendChild(c);
-    }
-    sel.value = state.date;
-    var note = $("replay-note");
-    note.hidden = state.date === "";
-    note.textContent = fill(t("replay_note"), { city: city["name_" + state.lang] });
+    document.querySelectorAll(".lang button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-lang") === state.lang));
+    });
+    renderRoles();
+    renderCities();
+    renderDays();
   }
 
   function renderRoles() {
     var box = $("roles");
+    var roles = roleList();
     box.textContent = "";
-    var roles = options ? options.roles : {
-      construction: { name_en: "Construction worker", name_hi: "निर्माण मज़दूर" },
-      rider: { name_en: "Delivery rider", name_hi: "डिलीवरी राइडर" },
-      vendor: { name_en: "Street vendor", name_hi: "रेहड़ी-पटरी विक्रेता" },
-    };
-    ["vendor", "rider", "construction"].forEach(function (key) {
+    ROLE_ORDER.forEach(function (key) {
       if (!roles[key]) return;
-      var b = el("button", "", roles[key]["name_" + state.lang]);
+      var b = el("button", "role");
       b.type = "button";
       b.setAttribute("aria-pressed", String(key === state.role));
+      b.appendChild(icon("i-" + key));
+      b.appendChild(el("span", "", roles[key]["name_" + state.lang]));
       b.addEventListener("click", function () {
         if (state.role === key) return;
         state.role = key;
@@ -169,15 +146,41 @@
     var sel = $("city");
     var cities = cityList();
     sel.textContent = "";
-    Object.keys(cities).forEach(function (key) {
-      var o = el("option", "", cities[key]["name_" + state.lang]);
-      o.value = key;
-      o.selected = key === state.city;
-      sel.appendChild(o);
-    });
+    Object.keys(cities).sort(function (a, b) { return a === "delhi" ? -1 : b === "delhi" ? 1 : a < b ? -1 : 1; })
+      .forEach(function (key) {
+        var o = el("option", "", cities[key]["name_" + state.lang]);
+        o.value = key;
+        o.selected = key === state.city;
+        sel.appendChild(o);
+      });
   }
 
-  // ---------- plan ----------
+  function renderDays() {
+    var sel = $("day");
+    var city = currentCity();
+    sel.textContent = "";
+    var found = state.date === "";
+    (city.replay_days || []).forEach(function (d) {
+      var o = el("option", "", fill(t("replay"), { label: d["label_" + state.lang] }));
+      o.value = d.date;
+      if (d.date === state.date) found = true;
+      sel.appendChild(o);
+    });
+    var today = el("option", "", t("today"));
+    today.value = "";
+    sel.appendChild(today);
+    if (!found) {
+      var c = el("option", "", state.date);
+      c.value = state.date;
+      sel.appendChild(c);
+    }
+    sel.value = state.date;
+    var note = $("replay-note");
+    note.hidden = state.date === "";
+    note.textContent = fill(t("replay_note"), { city: city["name_" + state.lang] });
+  }
+
+  // ---------- loading ----------
 
   function syncUrl() {
     var p = new URLSearchParams();
@@ -195,24 +198,18 @@
     $("loading").hidden = false;
     $("error").hidden = true;
     $("plan").setAttribute("aria-busy", "true");
-
-    var q = "city=" + encodeURIComponent(state.city) +
-      "&role=" + encodeURIComponent(state.role) +
-      "&lang=" + encodeURIComponent(state.lang) +
-      (state.date ? "&date=" + encodeURIComponent(state.date) : "");
+    var q = "city=" + encodeURIComponent(state.city) + "&role=" + encodeURIComponent(state.role) +
+      "&lang=" + encodeURIComponent(state.lang) + (state.date ? "&date=" + encodeURIComponent(state.date) : "");
 
     fetch("/api/plan?" + q)
-      .then(function (r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (data) {
         if (id !== requestId) return;
         plan = data;
-        render();
         $("loading").hidden = true;
         $("plan").hidden = false;
         $("plan").removeAttribute("aria-busy");
+        render();
       })
       .catch(function () {
         if (id !== requestId) return;
@@ -222,88 +219,313 @@
       });
   }
 
+  // ---------- rendering ----------
+
   function render() {
+    renderOverview();
+    renderAdvice();
+    renderShift();
+    renderChart();
+    renderTable();
+    renderLegend();
+    $("data-source").textContent = plan.data_source;
+    $("updated").textContent = formatStamp(plan.data_fetched_at);
+    $("print-title").textContent = fill(t("print_title"), { role: plan.role_name, city: plan.city_name, date: formatDate(plan.date) });
+  }
+
+  function renderOverview() {
     var s = plan.summary;
     var lv = s.worst_level;
-    var isToday = plan.date === cityToday();
-    var nowHour = isToday ? cityHour() : -1;
+    $("meta-line").textContent = fill(t("meta"), { role: plan.role_name, city: plan.city_name, date: formatDate(plan.date) });
+    $("mode-badge").textContent = t("modes")[plan.mode];
 
-    // status band
-    $("status").setAttribute("data-level", lv);
-    $("status-kicker").textContent = fill(t("kicker"), { city: plan.city_name, date: formatDate(plan.date) });
-    $("status-level").textContent = t("levels")[lv];
-    $("status-peak").textContent = fill(t("peak"), {
-      hi: Math.round(s.peak_heat_index_c), time: s.peak_time, temp: Math.round(s.peak_temp_c),
+    var pill = $("level-pill");
+    pill.textContent = "";
+    pill.setAttribute("data-level", lv);
+    pill.appendChild(levelIcon(lv));
+    pill.appendChild(el("span", "", t("levels")[lv]));
+
+    $("hero-temp").textContent = Math.round(s.peak_heat_index_c);
+    $("hero-caption").textContent = fill(t("hero_caption"), {
+      time: s.peak_time, temp: Math.round(s.peak_air_c), rh: s.peak_rh,
     });
 
-    var strip = $("strip");
-    var axis = $("strip-axis");
-    strip.textContent = "";
-    axis.textContent = "";
-    plan.hours.forEach(function (h) {
-      if (h.hour < WORK_DAY[0] || h.hour > WORK_DAY[1]) return;
-      var c = el("span", "lv-" + h.level + (h.hour === nowHour ? " now" : ""));
-      c.title = h.time + " · " + t("levels")[h.level] + " · " + Math.round(h.heat_index_c) + "°C";
-      strip.appendChild(c);
-      axis.appendChild(el("span", "", h.hour % 3 === 0 ? pad(h.hour) : ""));
-    });
-
-    // stats
     $("avoid-label").textContent = t("avoid_label")[plan.role];
     $("avoid-value").textContent = windowsText(s.avoid_windows);
     $("rest-value").textContent = s.max_rest_min ? fill(t("min"), { m: s.max_rest_min }) : t("none");
     $("water-value").textContent = fill(t("every_min"), { m: s.min_water_every_min });
-
-    // advice
-    $("message").textContent = plan.message;
-    $("message").lang = plan.lang;
-    if (plan.message_source.indexOf("bedrock:") === 0) {
-      var id = plan.message_source.slice(8);
-      $("message-source").textContent = fill(t("src_bedrock"), { model: MODEL_NAMES[id] || id });
-    } else {
-      $("message-source").textContent = t("src_template");
-    }
-
-    renderHours(nowHour);
-    renderLegend();
-    renderShare();
-
-    // meta
-    $("data-source").textContent = plan.data_source + " · " + t("modes")[plan.mode] + " · " + formatDate(plan.date);
-    $("updated").textContent = formatStamp(plan.data_fetched_at);
   }
 
-  function renderHours(nowHour) {
-    var list = $("hour-list");
-    list.textContent = "";
+  function renderAdvice() {
+    $("message").textContent = plan.message;
+    $("message").lang = plan.lang;
+    var chip = $("message-chip");
+    if (plan.message_source.indexOf("bedrock:") === 0) {
+      var id = plan.message_source.slice(8);
+      chip.textContent = t("chip_ai");
+      chip.classList.add("is-ai");
+      $("message-source").textContent = fill(t("src_bedrock"), { model: MODEL_NAMES[id] || id });
+    } else {
+      chip.textContent = t("chip_template");
+      chip.classList.remove("is-ai");
+      $("message-source").textContent = t("src_template");
+    }
+    var text = fill(t("share_text"), {
+      role: plan.role_name, city: plan.city_name, date: formatDate(plan.date), message: plan.message, url: location.href,
+    });
+    $("share").href = "https://wa.me/?text=" + encodeURIComponent(text);
+    $("share").className = "btn btn-primary";
+  }
+
+  // Group the working day into blocks with the same instruction.
+  function segments() {
+    var out = [];
     plan.hours.forEach(function (h) {
-      if (!state.showAll && (h.hour < WORK_DAY[0] || h.hour > WORK_DAY[1])) return;
+      if (h.hour < WORK_DAY[0] || h.hour > WORK_DAY[1]) return;
+      var key = h.avoid ? h.avoid_action : (h.rest_min ? "rest" + h.rest_min : "work");
+      var last = out[out.length - 1];
+      if (last && last.key === key && last.end === h.hour) {
+        last.end = h.hour + 1;
+        if (LEVELS.indexOf(h.level) > LEVELS.indexOf(last.level)) last.level = h.level;
+        last.maxHi = Math.max(last.maxHi, h.heat_index_c);
+        last.water = Math.min(last.water, h.water_every_min);
+      } else {
+        out.push({ key: key, start: h.hour, end: h.hour + 1, level: h.level, maxHi: h.heat_index_c,
+          water: h.water_every_min, rest: h.rest_min, avoid: h.avoid, action: h.avoid_action });
+      }
+    });
+    return out;
+  }
 
-      var li = el("li", "hour" + (h.avoid ? " avoid" : "") + (h.hour === nowHour ? " is-now" : ""));
+  function renderShift() {
+    var segs = segments();
+    var span = WORK_DAY[1] + 1 - WORK_DAY[0];
+    var bar = $("shift-bar");
+    var axis = $("shift-axis");
+    var list = $("segments");
+    bar.textContent = "";
+    axis.textContent = "";
+    list.textContent = "";
 
-      var time = el("span", "hour-time", h.time);
-      if (h.hour === nowHour) time.appendChild(el("small", "", t("now")));
-      li.appendChild(time);
+    segs.forEach(function (s) {
+      var part = el("span", s.avoid ? "fill-stop" : "fill-" + s.level);
+      part.style.flex = String(s.end - s.start);
+      bar.appendChild(part);
 
-      var bar = el("span", "bar");
-      var pct = Math.max(0.1, Math.min(1, (h.heat_index_c - 15) / 40)) * 100;
-      var fillEl = el("span", "bar-fill lv-" + h.level, Math.round(h.heat_index_c) + "°");
-      fillEl.style.width = pct.toFixed(1) + "%";
-      bar.appendChild(fillEl);
-      bar.title = fill("{lv} · air {t}°C · RH {rh}%", { lv: t("levels")[h.level], t: h.temp_c, rh: h.rh });
-      li.appendChild(bar);
-
-      var action;
-      if (h.avoid) action = h.avoid_action === "shade" ? t("do_shade") : t("do_stop");
-      else if (h.rest_min) action = fill(t("do_rest"), { m: h.rest_min });
-      else action = t("do_work");
-
-      var doEl = el("span", "hour-do");
-      doEl.appendChild(el("strong", "", action));
-      doEl.appendChild(el("span", "", t("levels")[h.level] + " · " + fill(t("water_short"), { m: h.water_every_min })));
-      li.appendChild(doEl);
-
+      var li = el("li", "segment" + (s.avoid ? " is-stop" : ""));
+      li.appendChild(el("span", "segment-time", hhmm(s.start) + "–" + hhmm(s.end)));
+      var body = el("div");
+      var title = el("p", "segment-title");
+      var sw = el("span", "swatch " + (s.avoid ? "fill-stop" : "fill-" + s.level));
+      title.appendChild(sw);
+      var label = s.avoid ? (s.action === "shade" ? t("seg_shade") : t("seg_stop"))
+        : s.rest ? fill(t("seg_rest"), { m: s.rest }) : t("seg_work");
+      title.appendChild(document.createTextNode(label));
+      body.appendChild(title);
+      body.appendChild(el("p", "fine", fill(t("seg_detail"), {
+        level: t("levels")[s.level], hi: Math.round(s.maxHi), w: s.water,
+      })));
+      li.appendChild(body);
       list.appendChild(li);
+    });
+
+    [WORK_DAY[0], 9, 13, 17, WORK_DAY[1] + 1].forEach(function (h) {
+      var tick = el("span", "", hhmm(h));
+      tick.style.left = ((h - WORK_DAY[0]) / span * 100) + "%";
+      axis.appendChild(tick);
+    });
+  }
+
+  // ---------- chart ----------
+
+  function renderChart() {
+    var box = $("chart");
+    var svg = $("chart-svg");
+    var tip = $("tooltip");
+    var W = box.clientWidth;
+    var H = box.clientHeight;
+    if (!W || !H) return;
+    svg.textContent = "";
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    tip.hidden = true;
+
+    var hours = plan.hours;
+    var cut = plan.cutoffs_c;
+    var m = { l: 34, r: W < 480 ? 12 : 72, t: 22, b: 26 };
+    var iw = W - m.l - m.r;
+    var ih = H - m.t - m.b;
+
+    var vals = [];
+    hours.forEach(function (h) { vals.push(h.heat_index_c, h.temp_c); });
+    var lo = Math.floor((Math.min.apply(null, vals) - 2) / 5) * 5;
+    var hi = Math.ceil((Math.max.apply(null, vals) + 3) / 5) * 5;
+    var n = hours.length;
+    var x = function (i) { return m.l + (n === 1 ? iw / 2 : (i / (n - 1)) * iw); };
+    var y = function (v) { return m.t + ih - ((v - lo) / (hi - lo)) * ih; };
+
+    // pattern for stop windows
+    var defs = svgEl("defs");
+    var pat = svgEl("pattern", { id: "stop-hatch", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+    pat.appendChild(svgEl("rect", { width: 6, height: 6, fill: "rgba(23,22,20,0.035)" }));
+    pat.appendChild(svgEl("rect", { width: 2, height: 6, fill: "rgba(23,22,20,0.13)" }));
+    defs.appendChild(pat);
+    svg.appendChild(defs);
+
+    // level bands
+    var bands = [
+      { lv: "safe", a: -100, b: cut.caution },
+      { lv: "caution", a: cut.caution, b: cut.danger },
+      { lv: "danger", a: cut.danger, b: cut.extreme },
+      { lv: "extreme", a: cut.extreme, b: 200 },
+    ];
+    var gBands = svgEl("g");
+    bands.forEach(function (bd) {
+      var a = Math.max(bd.a, lo), b = Math.min(bd.b, hi);
+      if (b <= a) return;
+      gBands.appendChild(svgEl("rect", { x: m.l, y: y(b), width: iw, height: y(a) - y(b), fill: LEVEL_TINT[bd.lv] }));
+      if (m.r > 40 && y(a) - y(b) > 16) {
+        var lab = svgEl("text", { x: m.l + iw + 10, y: (y(a) + y(b)) / 2 + 4, "class": "band-label" });
+        lab.textContent = t("levels")[bd.lv];
+        gBands.appendChild(lab);
+      }
+    });
+    svg.appendChild(gBands);
+
+    // stop windows (any contiguous avoided hours)
+    var gStop = svgEl("g");
+    var i = 0;
+    while (i < n) {
+      if (hours[i].avoid) {
+        var j = i;
+        while (j + 1 < n && hours[j + 1].avoid) j++;
+        var x0 = x(i) - (i > 0 ? iw / (n - 1) / 2 : 0);
+        var x1 = x(j) + (j < n - 1 ? iw / (n - 1) / 2 : 0);
+        gStop.appendChild(svgEl("rect", { x: x0, y: m.t, width: x1 - x0, height: ih, fill: "url(#stop-hatch)" }));
+        var sl = svgEl("text", { x: (x0 + x1) / 2, y: m.t - 7, "text-anchor": "middle", "class": "stop-label" });
+        sl.textContent = t("series_stop");
+        gStop.appendChild(sl);
+        i = j + 1;
+      } else i++;
+    }
+    svg.appendChild(gStop);
+
+    // grid + y axis
+    var gGrid = svgEl("g", { "class": "grid" });
+    var gAxis = svgEl("g", { "class": "axis" });
+    for (var v = lo; v <= hi; v += 5) {
+      gGrid.appendChild(svgEl("line", { x1: m.l, x2: m.l + iw, y1: y(v), y2: y(v) }));
+      var tl = svgEl("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" });
+      tl.textContent = v + "°";
+      gAxis.appendChild(tl);
+    }
+    var step = W < 480 ? 6 : 3;
+    hours.forEach(function (h, k) {
+      if (h.hour % step !== 0) return;
+      var xl = svgEl("text", { x: x(k), y: H - 6, "text-anchor": "middle" });
+      xl.textContent = pad(h.hour);
+      gAxis.appendChild(xl);
+    });
+    svg.appendChild(gGrid);
+    svg.appendChild(gAxis);
+
+    // now marker
+    var nh = nowHour();
+    if (nh >= 0) {
+      var ni = hours.findIndex(function (h) { return h.hour === nh; });
+      if (ni >= 0) {
+        svg.appendChild(svgEl("line", { x1: x(ni), x2: x(ni), y1: m.t, y2: m.t + ih, stroke: "#171614", "stroke-width": 1 }));
+        var nl = svgEl("text", { x: x(ni) + 4, y: m.t + 12, "class": "stop-label" });
+        nl.textContent = t("now");
+        svg.appendChild(nl);
+      }
+    }
+
+    // lines
+    function path(key) {
+      return hours.map(function (h, k) { return (k ? "L" : "M") + x(k).toFixed(1) + " " + y(h[key]).toFixed(1); }).join(" ");
+    }
+    svg.appendChild(svgEl("path", { d: path("temp_c"), fill: "none", stroke: "#a39d93", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    svg.appendChild(svgEl("path", { d: path("heat_index_c"), fill: "none", stroke: "#171614", "stroke-width": 2.5, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+
+    // peak marker + label
+    var pk = 0;
+    hours.forEach(function (h, k) { if (h.heat_index_c > hours[pk].heat_index_c) pk = k; });
+    svg.appendChild(svgEl("circle", { cx: x(pk), cy: y(hours[pk].heat_index_c), r: 5, fill: "#171614", stroke: "#fff", "stroke-width": 2 }));
+    var pl = svgEl("text", { x: Math.min(Math.max(x(pk), m.l + 30), m.l + iw - 30), y: y(hours[pk].heat_index_c) - 12, "text-anchor": "middle", "class": "peak-label" });
+    pl.textContent = Math.round(hours[pk].heat_index_c) + "° · " + hours[pk].time;
+    svg.appendChild(pl);
+
+    // hover layer
+    var cross = svgEl("line", { y1: m.t, y2: m.t + ih, stroke: "#171614", "stroke-width": 1, opacity: 0 });
+    var dotHi = svgEl("circle", { r: 4.5, fill: "#171614", stroke: "#fff", "stroke-width": 2, opacity: 0 });
+    var dotAir = svgEl("circle", { r: 4, fill: "#a39d93", stroke: "#fff", "stroke-width": 2, opacity: 0 });
+    svg.appendChild(cross);
+    svg.appendChild(dotAir);
+    svg.appendChild(dotHi);
+    var hit = svgEl("rect", { x: m.l, y: 0, width: iw, height: H, fill: "transparent" });
+    svg.appendChild(hit);
+
+    function show(evt) {
+      var rect = svg.getBoundingClientRect();
+      var px = evt.clientX - rect.left;
+      var k = Math.round(((px - m.l) / iw) * (n - 1));
+      k = Math.max(0, Math.min(n - 1, k));
+      var h = hours[k];
+      cross.setAttribute("x1", x(k)); cross.setAttribute("x2", x(k)); cross.setAttribute("opacity", 0.35);
+      dotHi.setAttribute("cx", x(k)); dotHi.setAttribute("cy", y(h.heat_index_c)); dotHi.setAttribute("opacity", 1);
+      dotAir.setAttribute("cx", x(k)); dotAir.setAttribute("cy", y(h.temp_c)); dotAir.setAttribute("opacity", 1);
+
+      tip.textContent = "";
+      var head = el("div", "tt-time");
+      head.appendChild(el("span", "", h.time));
+      var lvl = el("span", "lvl");
+      lvl.appendChild(levelIcon(h.level));
+      lvl.appendChild(el("span", "", t("levels")[h.level]));
+      head.appendChild(lvl);
+      tip.appendChild(head);
+      [[t("tip_feels"), Math.round(h.heat_index_c) + "°C"], [t("tip_air"), h.temp_c + "°C"], [t("tip_rh"), h.rh + "%"]]
+        .forEach(function (r) {
+          var row = el("div", "tt-row");
+          row.appendChild(el("span", "", r[0]));
+          row.appendChild(el("b", "", r[1]));
+          tip.appendChild(row);
+        });
+      tip.appendChild(el("div", "tt-do", actionText(h) + " · " + fill(t("water_short"), { m: h.water_every_min })));
+      tip.hidden = false;
+      var tw = tip.offsetWidth;
+      var left = x(k) + 14;
+      if (left + tw > W) left = x(k) - tw - 14;
+      tip.style.left = Math.max(0, left) + "px";
+    }
+    function hide() {
+      tip.hidden = true;
+      [cross, dotHi, dotAir].forEach(function (e) { e.setAttribute("opacity", 0); });
+    }
+    hit.addEventListener("pointermove", show);
+    hit.addEventListener("pointerdown", show);
+    hit.addEventListener("pointerleave", hide);
+
+    $("chart-desc").textContent = fill(t("chart_desc"), { hi: Math.round(hours[pk].heat_index_c), time: hours[pk].time });
+  }
+
+  function renderTable() {
+    var body = $("hours-body");
+    var nh = nowHour();
+    body.textContent = "";
+    plan.hours.forEach(function (h) {
+      var tr = el("tr", h.hour === nh ? "is-now" : "");
+      tr.appendChild(el("td", "", h.time));
+      var lv = el("td");
+      var span = el("span", "lvl");
+      span.appendChild(levelIcon(h.level));
+      span.appendChild(el("span", "", t("levels")[h.level]));
+      lv.appendChild(span);
+      tr.appendChild(lv);
+      tr.appendChild(el("td", "num", Math.round(h.heat_index_c) + "°"));
+      tr.appendChild(el("td", "num", h.temp_c + "°"));
+      tr.appendChild(el("td", "num", h.rh + "%"));
+      tr.appendChild(el("td", "", actionText(h) + " · " + fill(t("water_short"), { m: h.water_every_min })));
+      body.appendChild(tr);
     });
   }
 
@@ -311,45 +533,28 @@
     var c = plan.cutoffs_c;
     var ranges = t("legend_range");
     var vals = {
-      safe: { a: c.caution },
-      caution: { a: c.caution, b: c.danger },
-      danger: { a: c.danger, b: c.extreme },
-      extreme: { a: c.extreme },
+      safe: { a: c.caution }, caution: { a: c.caution, b: c.danger },
+      danger: { a: c.danger, b: c.extreme }, extreme: { a: c.extreme },
     };
     var list = $("legend-list");
     list.textContent = "";
     LEVELS.forEach(function (lv) {
       var li = el("li");
-      li.appendChild(el("i", "lv-" + lv));
-      var txt = el("span");
-      txt.appendChild(el("strong", "", t("levels")[lv]));
-      txt.appendChild(document.createTextNode(" " + fill(ranges[lv], vals[lv])));
-      li.appendChild(txt);
+      li.appendChild(levelIcon(lv));
+      li.appendChild(el("strong", "", t("levels")[lv]));
+      li.appendChild(el("span", "range", fill(ranges[lv], vals[lv])));
       list.appendChild(li);
     });
   }
 
-  function renderShare() {
-    var text = fill(t("share_text"), {
-      role: plan.role_name,
-      city: plan.city_name,
-      date: formatDate(plan.date),
-      message: plan.message,
-      url: location.href,
-    });
-    $("share").href = "https://wa.me/?text=" + encodeURIComponent(text);
-  }
-
-  // ---------- listen (read advice aloud) ----------
+  // ---------- listen ----------
 
   var synth = window.speechSynthesis;
-
   function stopSpeaking() {
     if (synth) synth.cancel();
     $("listen").setAttribute("aria-pressed", "false");
     $("listen-text").textContent = t("listen");
   }
-
   function speak() {
     if (!synth || !plan) return;
     if (synth.speaking) { stopSpeaking(); return; }
@@ -371,7 +576,7 @@
     var role = p.get("role") || recall("role");
     var lang = p.get("lang") || recall("lang");
     var date = p.get("date");
-    if (role === "vendor" || role === "rider" || role === "construction") state.role = role;
+    if (ROLE_ORDER.indexOf(role) >= 0) state.role = role;
     if (lang === "en" || lang === "hi") state.lang = lang;
     if (p.get("city")) state.city = p.get("city");
     if (date === "today") state.date = "";
@@ -392,40 +597,37 @@
         load();
       });
     });
-
-    $("day").addEventListener("change", function (e) {
-      state.date = e.target.value;
-      renderDays();
-      load();
-    });
-
+    $("day").addEventListener("change", function (e) { state.date = e.target.value; renderDays(); load(); });
     $("city").addEventListener("change", function (e) {
       state.city = e.target.value;
-      // Replay dates are per city: jump to the new city's first heatwave day
       var days = currentCity().replay_days || [];
       if (state.date !== "" && days.length) state.date = days[0].date;
       renderDays();
       load();
     });
-
-    $("toggle-hours").addEventListener("click", function () {
-      state.showAll = !state.showAll;
-      $("toggle-hours").textContent = state.showAll ? t("show_work") : t("show_all");
-      if (plan) renderHours(plan.date === cityToday() ? cityHour() : -1);
-    });
-
     $("retry").addEventListener("click", load);
+    $("print").addEventListener("click", function () { window.print(); });
+
+    // Print the hour table too
+    var details = document.querySelector(".table-wrap");
+    var wasOpen = false;
+    window.addEventListener("beforeprint", function () { wasOpen = details.open; details.open = true; });
+    window.addEventListener("afterprint", function () { details.open = wasOpen; });
 
     if (synth && window.SpeechSynthesisUtterance) {
       $("listen").hidden = false;
       $("listen").addEventListener("click", speak);
     }
 
+    var resizeTimer;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { if (plan) renderChart(); }, 120);
+    });
+
     fetch("/api/options")
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (data) {
-        if (data) { options = data; renderRoles(); renderCities(); renderDays(); }
-      })
+      .then(function (data) { if (data) { options = data; renderRoles(); renderCities(); renderDays(); } })
       .catch(function () { /* built-in defaults are fine */ });
 
     load();

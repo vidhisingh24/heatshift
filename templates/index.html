@@ -5,135 +5,222 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HeatShift: heat work plan</title>
   <meta name="description" content="Hour-by-hour work and rest plan for outdoor workers on hot days, in English and Hindi.">
-  <meta name="theme-color" content="#1d1b18">
+  <meta name="theme-color" content="#f6f5f1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23171614'/%3E%3Ccircle cx='16' cy='14' r='5' fill='%23d39b1c'/%3E%3Cpath d='M7 22h18M10 26h12' stroke='%23f6f5f1' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Devanagari:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Devanagari:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <header class="topbar">
-    <div class="wrap topbar-inner">
-      <div class="brand">
-        <span class="brand-name">HeatShift</span>
-        <span class="brand-sub" data-t="tagline"></span>
-      </div>
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-vendor" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9a3 3 0 0 0 6 0m0 0a3 3 0 0 0 6 0m0 0a3 3 0 0 0 6 0M5 12v8h14v-8M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-rider" viewBox="0 0 24 24"><circle cx="6" cy="17" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="17" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 17h6l-2-7h-3M13 10l2-4h3M15 6l3 11M4 11h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-construction" viewBox="0 0 24 24"><path d="M3 18h18M5 18v-2a7 7 0 0 1 14 0v2M10 9.5V6.5a2 2 0 0 1 4 0v3M8 11.5V9M16 11.5V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-safe" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M5 8.2l2 2 4-4.2" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-caution" viewBox="0 0 16 16"><path d="M8 1.5l7 12.5H1z" fill="currentColor"/><path d="M8 6v3.5M8 11.6v.1" stroke="#171614" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-danger" viewBox="0 0 16 16"><path d="M8 1.5l7 12.5H1z" fill="currentColor"/><path d="M8 6v3.5M8 11.6v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-extreme" viewBox="0 0 16 16"><path d="M5.1 1h5.8L15 5.1v5.8L10.9 15H5.1L1 10.9V5.1z" fill="currentColor"/><path d="M8 4.5v4.2M8 11.2v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6h-3M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 9v6M14 9v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.6 5.6l12.8 12.8" stroke="currentColor" stroke-width="1.6"/></symbol>
+  </svg>
+
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="/" aria-label="HeatShift home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#171614"/><circle cx="16" cy="14" r="5" fill="#d39b1c"/><path d="M7 22h18M10 26h12" stroke="#f6f5f1" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="brand-text">
+          <span class="brand-name">HeatShift</span>
+          <span class="brand-sub" data-t="tagline"></span>
+        </span>
+      </a>
       <div class="lang" role="group" aria-label="Language">
-        <button type="button" data-lang="en" lang="en">EN</button>
+        <button type="button" data-lang="en" lang="en">English</button>
         <button type="button" data-lang="hi" lang="hi">हिंदी</button>
       </div>
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="controls" aria-label="Choose">
+  <main class="container layout">
+    <!-- Settings -->
+    <aside class="settings card" aria-label="Choose">
+      <p class="eyebrow" data-t="settings"></p>
       <fieldset class="field">
-        <legend data-t="work_as"></legend>
+        <legend class="label" data-t="work_as"></legend>
         <div class="roles" id="roles"></div>
       </fieldset>
-
-      <div class="field-row">
-        <label class="field">
-          <span data-t="city"></span>
-          <select id="city"></select>
-        </label>
-        <label class="field grow">
-          <span data-t="day"></span>
-          <select id="day"></select>
-        </label>
-      </div>
-      <p class="note" id="replay-note"></p>
-    </section>
-
-    <p class="loading" id="loading" aria-live="polite" hidden data-t="loading"></p>
-
-    <section class="error" id="error" hidden>
-      <p data-t="error"></p>
-      <button type="button" id="retry" data-t="retry"></button>
-    </section>
-
-    <div id="plan" hidden>
-      <section class="status" id="status" aria-live="polite">
-        <p class="status-kicker" id="status-kicker"></p>
-        <p class="status-level" id="status-level"></p>
-        <p class="status-peak" id="status-peak"></p>
-        <div class="strip" id="strip" aria-hidden="true"></div>
-        <div class="strip-axis" id="strip-axis" aria-hidden="true"></div>
-      </section>
-
-      <section class="stats">
-        <div class="stat">
-          <span class="stat-label" id="avoid-label"></span>
-          <span class="stat-value" id="avoid-value"></span>
-        </div>
-        <div class="stat">
-          <span class="stat-label" data-t="rest_hr"></span>
-          <span class="stat-value" id="rest-value"></span>
-        </div>
-        <div class="stat">
-          <span class="stat-label" data-t="water"></span>
-          <span class="stat-value" id="water-value"></span>
-        </div>
-      </section>
-
-      <section class="advice">
-        <div class="advice-head">
-          <h2 data-t="advice"></h2>
-          <button type="button" class="listen" id="listen" hidden>
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z" fill="currentColor"/></svg>
-            <span id="listen-text" data-t="listen"></span>
-          </button>
-        </div>
-        <p class="advice-text" id="message"></p>
-        <p class="advice-src" id="message-source"></p>
-        <a class="share" id="share" href="#" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M18 16a3 3 0 0 0-2.4 1.2l-6.7-3.4a3 3 0 0 0 0-1.6l6.7-3.4A3 3 0 1 0 15 7l-6.7 3.4a3 3 0 1 0 0 3.2L15 17a3 3 0 1 0 3-1z" fill="currentColor"/></svg>
-          <span data-t="share"></span>
-        </a>
-      </section>
-
-      <section class="hours">
-        <div class="hours-head">
-          <h2 data-t="hourly"></h2>
-          <button type="button" class="link" id="toggle-hours" data-t="show_all"></button>
-        </div>
-        <div class="hours-cols" aria-hidden="true">
-          <span data-t="col_time"></span>
-          <span data-t="col_feels"></span>
-          <span data-t="col_do"></span>
-        </div>
-        <ol class="hour-list" id="hour-list"></ol>
-      </section>
-
-      <section class="legend">
-        <h2 data-t="legend"></h2>
-        <ul class="legend-list" id="legend-list"></ul>
-        <p class="note" data-t="legend_note"></p>
-      </section>
-
-      <section class="meta">
-        <dl>
-          <dt data-t="data"></dt>
-          <dd id="data-source"></dd>
-          <dt data-t="updated"></dt>
-          <dd id="updated"></dd>
-        </dl>
-        <p class="attribution"><a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>)</p>
-      </section>
-    </div>
-
-    <aside class="disclaimer" role="note">
-      <strong data-t="prototype"></strong>
-      <span data-t="disclaimer"></span>
+      <label class="field">
+        <span class="label" data-t="city"></span>
+        <select id="city"></select>
+      </label>
+      <label class="field">
+        <span class="label" data-t="day"></span>
+        <select id="day"></select>
+      </label>
+      <p class="hint" id="replay-note"></p>
     </aside>
+
+    <div class="content">
+      <p class="loading" id="loading" aria-live="polite" hidden><span class="spinner" aria-hidden="true"></span><span data-t="loading"></span></p>
+
+      <section class="card error" id="error" hidden>
+        <p data-t="error"></p>
+        <button type="button" class="btn" id="retry" data-t="retry"></button>
+      </section>
+
+      <div id="plan" hidden>
+        <p class="print-title" id="print-title"></p>
+
+        <!-- Overview -->
+        <section class="card overview" id="overview">
+          <div class="overview-head">
+            <p class="meta-line" id="meta-line"></p>
+            <span class="badge" id="mode-badge"></span>
+          </div>
+          <div class="overview-main">
+            <div class="headline">
+              <span class="level-pill" id="level-pill"></span>
+              <p class="hero-figure"><span id="hero-temp"></span><span class="hero-unit">°C</span></p>
+              <p class="hero-caption" id="hero-caption"></p>
+            </div>
+            <dl class="kpis">
+              <div class="kpi">
+                <dt><svg class="ico" aria-hidden="true"><use href="#i-stop"/></svg><span id="avoid-label"></span></dt>
+                <dd id="avoid-value"></dd>
+              </div>
+              <div class="kpi">
+                <dt><svg class="ico" aria-hidden="true"><use href="#i-pause"/></svg><span data-t="rest_hr"></span></dt>
+                <dd id="rest-value"></dd>
+              </div>
+              <div class="kpi">
+                <dt><svg class="ico" aria-hidden="true"><use href="#i-drop"/></svg><span data-t="water"></span></dt>
+                <dd id="water-value"></dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        <!-- Advice -->
+        <section class="card advice">
+          <div class="card-head">
+            <h2 data-t="advice"></h2>
+            <span class="source-chip" id="message-chip"></span>
+          </div>
+          <p class="advice-text" id="message"></p>
+          <p class="fine" id="message-source"></p>
+          <div class="actions">
+            <button type="button" class="btn" id="listen" hidden>
+              <svg class="ico" aria-hidden="true"><use href="#i-sound"/></svg><span id="listen-text" data-t="listen"></span>
+            </button>
+            <a class="btn" id="share" href="#" target="_blank" rel="noopener">
+              <svg class="ico" aria-hidden="true"><use href="#i-share"/></svg><span data-t="share"></span>
+            </a>
+            <button type="button" class="btn btn-quiet" id="print">
+              <svg class="ico" aria-hidden="true"><use href="#i-print"/></svg><span data-t="print"></span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Shift plan -->
+        <section class="card">
+          <div class="card-head">
+            <h2 data-t="shift_plan"></h2>
+            <span class="fine" data-t="shift_plan_sub"></span>
+          </div>
+          <div class="shift-bar" id="shift-bar" aria-hidden="true"></div>
+          <div class="shift-axis" id="shift-axis" aria-hidden="true"></div>
+          <ol class="segments" id="segments"></ol>
+        </section>
+
+        <!-- Chart -->
+        <section class="card">
+          <div class="card-head">
+            <h2 data-t="chart_title"></h2>
+            <div class="legend-keys" aria-hidden="true">
+              <span><i class="key key-hi"></i><span data-t="series_hi"></span></span>
+              <span><i class="key key-air"></i><span data-t="series_air"></span></span>
+              <span><i class="key key-stop"></i><span data-t="series_stop"></span></span>
+            </div>
+          </div>
+          <div class="chart" id="chart">
+            <svg id="chart-svg" role="img" aria-labelledby="chart-desc"></svg>
+            <div class="tooltip" id="tooltip" hidden></div>
+          </div>
+          <p class="sr-only" id="chart-desc"></p>
+
+          <details class="table-wrap">
+            <summary data-t="table_toggle"></summary>
+            <div class="table-scroll">
+              <table class="hours-table">
+                <thead>
+                  <tr>
+                    <th data-t="col_time"></th>
+                    <th data-t="col_level"></th>
+                    <th class="num" data-t="col_feels"></th>
+                    <th class="num" data-t="col_air"></th>
+                    <th class="num" data-t="col_rh"></th>
+                    <th data-t="col_do"></th>
+                  </tr>
+                </thead>
+                <tbody id="hours-body"></tbody>
+              </table>
+            </div>
+          </details>
+        </section>
+
+        <!-- Info -->
+        <div class="info-grid">
+          <section class="card">
+            <h2 data-t="signs_title"></h2>
+            <div class="signs">
+              <div class="sign">
+                <h3 data-t="exhaustion"></h3>
+                <p class="fine" data-t="exhaustion_signs"></p>
+                <p data-t="exhaustion_do"></p>
+              </div>
+              <div class="sign sign-urgent">
+                <h3 data-t="stroke"></h3>
+                <p class="fine" data-t="stroke_signs"></p>
+                <p data-t="stroke_do"></p>
+              </div>
+            </div>
+          </section>
+          <section class="card">
+            <h2 data-t="legend"></h2>
+            <ul class="legend-list" id="legend-list"></ul>
+            <p class="fine" data-t="legend_note"></p>
+          </section>
+        </div>
+
+        <section class="sources">
+          <dl>
+            <dt data-t="data"></dt>
+            <dd id="data-source"></dd>
+            <dt data-t="updated"></dt>
+            <dd id="updated"></dd>
+          </dl>
+          <p class="attribution"><a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>)</p>
+        </section>
+      </div>
+
+      <aside class="disclaimer" role="note">
+        <strong data-t="prototype"></strong>
+        <span data-t="disclaimer"></span>
+      </aside>
+    </div>
   </main>
 
-  <footer class="footer wrap">
-    <span>HeatShift</span>
-    <span>·</span>
-    <a href="https://github.com/vidhisingh24/heatshift" target="_blank" rel="noopener">Source on GitHub</a>
-    <span>·</span>
-    <span data-t="footer_aws"></span>
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>HeatShift</span>
+      <a href="https://github.com/vidhisingh24/heatshift" target="_blank" rel="noopener" data-t="source_code"></a>
+      <span data-t="footer_aws"></span>
+    </div>
   </footer>
 
   <script src="{{ url_for('static', filename='i18n.js') }}"></script>
