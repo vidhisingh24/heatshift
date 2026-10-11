@@ -4,9 +4,9 @@
 
 ## The problem
 
-India's heat action plans are built around warnings: a colour code and a temperature. The Centre for Policy Research reviewed 37 of these plans and found that only 10 set locally defined thresholds and very few assess who is actually vulnerable (CPR, 2023; *verify figures before submission*).
+India's heat action plans are built around warnings: a colour code and a temperature. The Centre for Policy Research reviewed 37 of these plans and found that only 10 set locally defined thresholds and only 2 assessed who is vulnerable (Pillai & Dalal, CPR, 2023).
 
-The people most exposed are informal outdoor workers: street vendors, delivery riders and construction workers. They can't stay indoors, and most have no support at work. In a WIEGO survey of Delhi street vendors, 89% had no access to free clean drinking water while working (*verify title and sample size before submission*).
+The people most exposed are informal outdoor workers: street vendors, delivery riders and construction workers. They can't stay indoors, and most have no support at work. In a WIEGO survey of around 500 Delhi street vendors in 2025, 89% had no access to free clean drinking water while working ([Question of Cities](https://questionofcities.org/mapping-heat-stress-shows-delhi-street-vendors-precarity/)).
 
 A warning that says "44°C" leaves the decision to them. Should they take the 1 PM delivery? How long should they rest? How often should they drink water?
 

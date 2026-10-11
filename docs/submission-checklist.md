@@ -14,9 +14,7 @@ A submission is three things: **a public repo**, **a YouTube demo under 3 minute
   - [ ] uploaded to **YouTube** as Public or Unlisted
   - [ ] **opened in an incognito / signed-out browser** to check the link works
 - [ ] **Writeup** pasted from `docs/writeup.md`, with the video link added
-- [ ] **Two facts verified, then the "verify" markers removed** from README.md, docs/writeup.md and docs/blog.md:
-  - [ ] CPR (2023): "only 2 of 37 plans assessed vulnerability"
-  - [ ] WIEGO: exact title and sample size (519?)
+- [x] Citations confirmed: CPR (Pillai & Dalal 2023: 37 plans, 10 local thresholds, 2 vulnerability assessments); WIEGO Delhi vendor study (around 500 vendors, 89% without free drinking water), via Question of Cities
 - [ ] Track selected: **Heat and Water**
 - [ ] Submitted before the deadline on the event page
 

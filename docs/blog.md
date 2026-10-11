@@ -14,11 +14,11 @@ On 18 June 2024, Delhi's air temperature reached 44°C, and with the humidity it
 - How long should I rest, and how often?
 - How much water, and when?
 
-India's heat action plans are mostly built around warnings. The Centre for Policy Research reviewed 37 of them and found that only 10 set locally defined temperature thresholds, and very few assessed who is actually vulnerable. The most exposed people are informal outdoor workers: street vendors, delivery riders and construction workers. They can't stay indoors and rarely have support at work. In a WIEGO survey of Delhi street vendors, 89% had no access to free clean drinking water while working.
+India's heat action plans are mostly built around warnings. The Centre for Policy Research reviewed 37 of them and found that only 10 set locally defined temperature thresholds, and only 2 assessed who is vulnerable. The most exposed people are informal outdoor workers: street vendors, delivery riders and construction workers. They can't stay indoors and rarely have support at work. In a WIEGO survey of around 500 Delhi street vendors in 2025, 89% had no access to free clean drinking water while working.
 
 So I built **HeatShift**. You pick your city, your work and your language, and it turns the hourly forecast into a **work-and-rest schedule for your job**, in English or Hindi.
 
-![HeatShift in English and Hindi](screenshots/en-rider.png)
+![HeatShift home screen](screenshots/01-home.png)
 
 ## What it does
 
