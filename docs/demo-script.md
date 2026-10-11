@@ -27,5 +27,6 @@
 | 2:40–2:48 | **Text card:** "HeatShift · github.com/vidhisingh24/heatshift" and "Next: local thresholds per city · SMS/WhatsApp alerts · employer view". | "HeatShift: from a heat warning to a plan for the day." |
 
 ## If something goes wrong while recording
+- **Console Logs won't download:** show the live API instead. Open `<live URL>/api/plan?city=delhi&role=rider&lang=hi&date=2024-06-18` in a browser tab and point at `"message_source": "bedrock:amazon.nova-lite-v1:0"`, which proves the message came from Bedrock on the live server.
 - **Bedrock fails:** the app shows "Standard advice text". Say "the AI writer is unavailable, so the template takes over". That demonstrates the fallback.
 - **Over 3:00:** cut the hour-list scroll (0:40–1:20) and the Ahmedabad step first.
