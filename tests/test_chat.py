@@ -34,6 +34,18 @@ def test_emergency_detection(msg, expected):
     assert chat.is_emergency(msg) is expected
 
 
+@pytest.mark.parametrize("msg, ui, expected", [
+    ("mujhe english samjh nhi aati hindi mein bolo", "en", "hi"),   # Hinglish -> Hindi
+    ("agar main ye jagah ka naam location mein daalu", "en", "hi"),
+    ("मुझे पानी कहाँ मिलेगा?", "en", "hi"),                          # Devanagari -> Hindi
+    ("Where can I drink water?", "en", "en"),
+    ("Where can I drink water?", "hi", "hi"),                         # keeps the page language
+    ("Is it safe at 2 pm in Delhi?", "en", "en"),
+])
+def test_reply_language(msg, ui, expected):
+    assert chat.reply_language(msg, ui) == expected
+
+
 def test_clean_strips_reasoning_tags():
     assert chat.clean("<thinking>plan</thinking>\nDrink water.") == "Drink water."
 
@@ -95,6 +107,12 @@ def test_bedrock_timeout_falls_back(client, monkeypatch):
 def test_hindi_fallback_is_hindi(client):
     with patch.object(chat, "_model_answer", side_effect=RuntimeError("down")):
         body = ask(client, "मुझे 3 बजे जाना है", lang="hi").get_json()
+    assert "महसूस तापमान" in body["answer"]
+
+
+def test_hinglish_on_english_page_gets_hindi_answer(client):
+    with patch.object(chat, "_model_answer", side_effect=RuntimeError("down")):
+        body = ask(client, "mujhe 2 baje jana hai kya karu", lang="en").get_json()
     assert "महसूस तापमान" in body["answer"]
 
 

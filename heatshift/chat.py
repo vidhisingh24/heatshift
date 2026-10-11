@@ -91,6 +91,25 @@ def parse_time(message, default_hour):
     return hour, True
 
 
+# Common Hindi words written in Latin letters (Hinglish). Two or more => the user wants Hindi.
+HINGLISH_WORDS = {
+    "mujhe", "mujhko", "main", "mein", "hai", "hain", "kya", "kaise", "kahan", "kahaan", "kab", "nahi", "nhi", "nahin",
+    "bolo", "batao", "bataiye", "karna", "karu", "karun", "jana", "jaana", "jau", "jaun", "paani", "pani", "garmi",
+    "dhoop", "chhaon", "chaon", "abhi", "aaj", "kal", "baje", "samajh", "samjh", "aati", "aata", "hindi", "mera",
+    "meri", "yeh", "ye", "woh", "wo", "toh", "aur", "lekin", "kuch", "sakta", "sakti", "chahiye", "jagah", "daalu",
+}
+
+
+def reply_language(message, ui_lang):
+    """Answer in the language the worker actually writes: Devanagari or Hinglish -> Hindi."""
+    if any("ऀ" <= ch <= "ॿ" for ch in message):
+        return "hi"
+    words = re.findall(r"[a-z]+", message.lower())
+    if sum(1 for w in words if w in HINGLISH_WORDS) >= 2:
+        return "hi"
+    return ui_lang
+
+
 def emergency_answer(lang):
     s = STOP_SIGNS[lang]
     return f"{s['emergency_title']}.\n{s['emergency_do']}"
@@ -133,13 +152,22 @@ SYSTEM_PROMPT = """You are HeatShift's heat-safety assistant for informal outdoo
 (street vendors, delivery riders, construction workers).
 
 Scope: only heat safety at work: when to work or rest, going out in heat, water, shade, heat illness \
-warning signs. For anything else, reply in one short sentence that you can only help with heat safety at work.
+warning signs, and how to use this app. For anything else, reply in one short sentence that you can only \
+help with heat safety at work.
 
 Facts: ALWAYS call a tool before giving any number. Use get_plan for the day, get_trip whenever the user \
 mentions a time (or "now"), find_places when they ask about water, shade or rest nearby. Use ONLY numbers, \
 times and places returned by the tools. Never invent temperatures, times, places or distances.
 
-Style: reply in {language}. At most 6 short lines, plain everyday words, concrete steps. Mention the safer \
+Language: reply in {language}, whatever language the question is in. Never refuse because of language; \
+if the user asks for Hindi or English, simply answer in it.
+
+Each message is answered on its own: never ask the user a follow-up question. If something is missing \
+(like their exact location), answer with what the tools give (find_places uses their saved location or the \
+city centre). You cannot search for a place by its name; if asked, say to use the Nearby page and open \
+"Open in Maps" there.
+
+Style: at most 6 short lines, plain everyday words, concrete steps. Mention the safer \
 alternative time if the tool gives one. Use at most 4 checklist steps. When listing places, give each \
 place's name, what it is and the walking time. If the risk level is danger or extreme, end with this line exactly:
 {stop_line}
@@ -235,7 +263,8 @@ def _valid(text, lang):
 def answer(message, ctx):
     """ctx: lang, role, city_name, date, mode, rows, summary, now_hour, earliest, places_fn.
     Returns dict(answer, message_source, tools_used[, fallback_reason])."""
-    lang = ctx["lang"]
+    lang = reply_language(message, ctx["lang"])
+    ctx = {**ctx, "lang": lang}
     if is_emergency(message):
         return {"answer": emergency_answer(lang), "message_source": "template", "tools_used": [],
                 "emergency": True}
