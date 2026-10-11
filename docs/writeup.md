@@ -26,6 +26,10 @@ HeatShift is a mobile-first web app. You pick your city, your work and your lang
 - **Print or save as PDF**, giving a one-page notice for a site supervisor or market board.
 - **Know the signs:** heat exhaustion vs. heat stroke, and when to call 108.
 - **A short advice message in English or Hindi**, with a Listen button that reads it aloud and a **Share on WhatsApp** button for passing the plan to co-workers.
+- **"I can't avoid this time" safe-trip mode.** "I have to go out at 14:00 for 2 hours" returns the risk for that window, a checklist for the job (NCDC/NDMA guidance), the nearest cooler time ("go 3 hours later: feels like 44°C instead of 46°C"), and a red stop-signs box with 108/112 call buttons.
+- **Find water and shade near me.** OpenStreetMap places through a server-side Overpass proxy: free drinking water, shops selling water or ORS, and shaded or AC places, with walking times and a "10-minute break" pick. The location stays on the phone.
+- **AI chat assistant.** Workers ask in their own words, in English or Hindi. A Strands agent on Bedrock answers by calling HeatShift's own tools (`get_plan`, `get_trip`, `find_places`), so it never invents a temperature. Emergency words skip the AI and go straight to 108/112.
+- **First-visit setup.** Job, city, language and optional work hours are saved on the phone, and danger hours inside the worker's shift are pointed out. There are no accounts and no database.
 - **Two cities, Delhi and Ahmedabad.** Ahmedabad had India's first heat action plan. It was added with one JSON entry and no code changes.
 - **The data source, last-updated time, Open-Meteo attribution and a "prototype, not medical advice" note**, always visible.
 
@@ -46,7 +50,8 @@ Because it is October, the app can **replay real 2024 Delhi heatwave days** from
 HeatShift covers both of the event's AWS paths: **Build It** (Strands Agents, an AWS open-source tool) and **Ship It** (deployed on AWS: Elastic Beanstalk on EC2, with S3 and Bedrock). The demo video shows the running Beanstalk environment, the live URL and the server logs of Bedrock calls.
 
 - **AWS Elastic Beanstalk** hosts the Flask app: Python 3.12 on Amazon Linux 2023, single instance, in ap-southeast-2. I deploy from the CLI with a small PowerShell script that zips the app, uploads it to S3, creates a version, updates the environment, waits for Ready and checks `/health`.
-- **Strands Agents**, AWS's open-source agent SDK, runs the advice agent. Its system prompt only allows the numbers HeatShift computed: no invented temperatures, no lists, plain words, Hindi in Devanagari.
+- **Strands Agents with tool use** powers the chat assistant. The agent's tools are HeatShift's own deterministic functions (plan, trip, places). Bedrock decides which tool to call, and the answer can only contain numbers the tools returned.
+- **Strands Agents**, AWS's open-source agent SDK, also runs the advice agent. Its system prompt only allows the numbers HeatShift computed: no invented temperatures, no lists, plain words, Hindi in Devanagari.
 - **Amazon Bedrock** (Amazon Nova Lite, in-Region in Sydney) writes the message through the Converse API. Model and region are environment variables.
 - **IAM instance role:** the server calls Bedrock with its role, so there are no keys anywhere.
 
