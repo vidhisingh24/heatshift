@@ -2,8 +2,9 @@
   "delhi": {
     "name_en": "Delhi",
     "name_hi": "दिल्ली",
-    "lat": 28.61,
-    "lon": 77.21,
+    "lat": 28.6315,
+    "lon": 77.2167,
+    "centre_name": "Connaught Place",
     "tz": "Asia/Kolkata",
     "utc_offset_minutes": 330,
     "hi_cutoffs_c": {

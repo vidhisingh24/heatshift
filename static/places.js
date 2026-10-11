@@ -17,6 +17,7 @@
       locating: "Finding your location…",
       searching: "Searching within 1 km…",
       denied: "Location not available. Showing the city centre instead.",
+      insecure: "Your browser only shares location on secure (https) links, so this shows the city centre.",
       error: "Place search is unavailable right now. Try again in a minute.",
       found: "{n} places within 1 km of {where}.",
       you: "your location",
@@ -43,6 +44,7 @@
       locating: "आपकी लोकेशन ढूँढ रहे हैं…",
       searching: "1 किमी के अंदर ढूँढ रहे हैं…",
       denied: "लोकेशन नहीं मिली। शहर का केंद्र दिखा रहे हैं।",
+      insecure: "आपका ब्राउज़र लोकेशन सिर्फ़ सुरक्षित (https) लिंक पर देता है, इसलिए शहर का केंद्र दिखा रहे हैं।",
       error: "अभी जगहें नहीं मिल पा रहीं। एक मिनट बाद फिर कोशिश करें।",
       found: "{where} से 1 किमी के अंदर {n} जगहें।",
       you: "आपकी लोकेशन",
@@ -184,6 +186,8 @@
   $("places-near").addEventListener("click", function () {
     var st = HS.state;
     if (typeof st.lat === "number") return search(st.lat, st.lon, true);
+    // Browsers only share location with https pages
+    if (!window.isSecureContext) { $("places-status").textContent = tx("insecure"); return centre(); }
     if (!navigator.geolocation) { $("places-status").textContent = tx("denied"); return centre(); }
     $("places-status").textContent = tx("locating");
     navigator.geolocation.getCurrentPosition(function (pos) {

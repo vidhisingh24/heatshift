@@ -221,7 +221,7 @@
   }
 
   function locate(statusEl, done) {
-    if (!navigator.geolocation) { statusEl.textContent = t("location_failed"); return; }
+    if (!window.isSecureContext || !navigator.geolocation) { statusEl.textContent = t("location_failed"); return; }
     statusEl.textContent = t("locating");
     navigator.geolocation.getCurrentPosition(function (pos) {
       state.lat = Math.round(pos.coords.latitude * 10000) / 10000;
