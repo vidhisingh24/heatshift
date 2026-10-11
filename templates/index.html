@@ -263,6 +263,24 @@
           </details>
         </section>
 
+        <!-- AI chat -->
+        <section class="card chat" id="chat-card" aria-labelledby="chat-title">
+          <div class="card-head">
+            <h2 id="chat-title" data-tc="title"></h2>
+            <span class="fine" data-tc="powered"></span>
+          </div>
+          <div class="chat-log" id="chat-log" aria-live="polite"></div>
+          <div class="chips" id="chat-chips"></div>
+          <form class="chat-form" id="chat-form">
+            <label class="sr-only" for="chat-input" data-tc="placeholder"></label>
+            <textarea id="chat-input" rows="2" maxlength="500"></textarea>
+            <div class="chat-bar">
+              <span class="fine" id="chat-count">0/500</span>
+              <button type="submit" class="btn btn-primary" id="chat-send" data-tc="send"></button>
+            </div>
+          </form>
+        </section>
+
         <!-- Info -->
         <div class="info-grid">
           <section class="card">
@@ -318,5 +336,6 @@
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   <script src="{{ url_for('static', filename='trip.js') }}"></script>
   <script src="{{ url_for('static', filename='places.js') }}"></script>
+  <script src="{{ url_for('static', filename='chat.js') }}"></script>
 </body>
 </html>

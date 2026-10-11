@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from flask import Flask, jsonify, render_template, request
 
 from heatshift.advice import get_message
+from heatshift.chat import MAX_MESSAGE_CHARS, RateLimited, answer, check_rate
 from heatshift.cities import CITIES, get_city
 from heatshift.places import PlacesError, find_places
 from heatshift.profiles import PROFILES, get_profile
@@ -169,6 +170,62 @@ def places():
         raise ApiError(str(e), 503)
     # Never log coordinates.
     log.info("places radius=%s source=%s count=%s", result["radius_m"], result["source"], result["count"])
+    return jsonify(result)
+
+
+def _client_ip():
+    # Behind Beanstalk's nginx proxy the client is the first X-Forwarded-For entry.
+    fwd = request.headers.get("X-Forwarded-For", "")
+    return fwd.split(",")[0].strip() or request.remote_addr or "unknown"
+
+
+def _places_summary(lat, lon, city, lang):
+    """Short list of nearby spots for the chat ('Name (kind, 200 m)'). Never raises."""
+    try:
+        lat = float(lat) if lat not in (None, "") else city["lat"]
+        lon = float(lon) if lon not in (None, "") else city["lon"]
+        res = find_places(lat, lon, 1000)
+    except Exception:  # noqa: BLE001
+        return []
+    labels = {"drink": "free drinking water", "buy": "buy water/ORS", "shade": "sit in shade/AC"}
+    unnamed = {"drinking_water": "Drinking water point", "fountain": "Drinking fountain"}
+    out = []
+    for c in ("drink", "buy", "shade"):
+        for p in res["groups"][c][:2]:
+            name = (p.get("name_hi") if lang == "hi" else None) or p["name"] or unnamed.get(p["kind"], p["kind"])
+            out.append(f"{name}: {labels[c]}, {p['distance_m']} m ({p['walk_min']} min walk)")
+    return out
+
+
+@application.post("/api/chat")
+def chat():
+    body = request.get_json(silent=True) or {}
+    message = str(body.get("message") or "").strip()
+    if not message:
+        raise ApiError("message is required")
+    if len(message) > MAX_MESSAGE_CHARS:
+        raise ApiError(f"message is too long (max {MAX_MESSAGE_CHARS} characters)")
+    try:
+        check_rate(_client_ip())
+    except RateLimited:
+        raise ApiError("too many messages; wait a minute and try again", 429)
+
+    p = load_plan(body.get("city"), body.get("role"), body.get("lang"), body.get("date"))
+    weather, city = p["weather"], p["city"]
+    earliest = 0
+    if weather["mode"] == "forecast" and weather["date"] == city_today(city).isoformat():
+        earliest = city_hour(city)
+    lat, lon = body.get("lat"), body.get("lon")
+    ctx = {
+        "lang": p["lang"], "role": p["role"], "city_name": city["name_en"], "date": weather["date"],
+        "mode": weather["mode"], "rows": p["rows"], "summary": p["summary"],
+        "now_hour": city_hour(city), "earliest": earliest,
+        "places_fn": lambda: _places_summary(lat, lon, city, p["lang"]),
+    }
+    result = answer(message, ctx)
+    # Log the outcome only; never the message text or location.
+    log.info("chat role=%s lang=%s source=%s tools=%s", p["role"], p["lang"], result["message_source"],
+             ",".join(result.get("tools_used", [])))
     return jsonify(result)
 
 
