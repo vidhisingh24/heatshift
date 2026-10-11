@@ -200,6 +200,22 @@
           <div id="trip-result" aria-live="polite"></div>
         </section>
 
+        <!-- Nearby water and shade -->
+        <section class="card places" id="places-card" aria-labelledby="places-title">
+          <div class="card-head">
+            <h2 id="places-title" data-tp="title"></h2>
+          </div>
+          <p class="fine" data-tp="intro"></p>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="places-near">
+              <svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg><span data-tp="near_me"></span>
+            </button>
+            <button type="button" class="btn" id="places-centre" data-tp="city_centre"></button>
+          </div>
+          <p class="hint" id="places-status" aria-live="polite"></p>
+          <div id="places-result"></div>
+        </section>
+
         <!-- Shift plan -->
         <section class="card">
           <div class="card-head">
@@ -301,5 +317,6 @@
   <script src="{{ url_for('static', filename='i18n.js') }}"></script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   <script src="{{ url_for('static', filename='trip.js') }}"></script>
+  <script src="{{ url_for('static', filename='places.js') }}"></script>
 </body>
 </html>

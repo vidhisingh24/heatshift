@@ -261,6 +261,26 @@ html:lang(hi) .advice-text { font-size: 1.15rem; line-height: 1.8; }
 }
 .trip-sources { margin-top: 12px; }
 
+/* ---------- places ---------- */
+.places .actions { margin-top: 12px; }
+.places .hint { margin-top: 10px; }
+#places-result:not(:empty) { margin-top: 14px; }
+.break-box { padding: 14px; border-radius: 12px; background: var(--safe-tint); margin-bottom: 14px; }
+.break-title { font-weight: 700; }
+.places-map { height: 220px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); margin-bottom: 14px; z-index: 0; }
+.place-group { margin-top: 14px; }
+.place-group h3 { margin-bottom: 6px; }
+.place-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.place { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.break-box .place { border-top-color: rgba(23, 22, 20, 0.08); }
+.place-ico { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); }
+.place-ico .ico { width: 16px; height: 16px; }
+.cat-drink { color: var(--safe); }
+.cat-buy { color: var(--danger); }
+.cat-shade { color: var(--ink-2); }
+.place-name { font-weight: 600; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.place-link { font-size: 0.8rem; font-weight: 500; white-space: nowrap; }
+
 /* ---------- shift plan ---------- */
 .shift-bar { display: flex; gap: 2px; height: 14px; }
 .shift-bar span { display: block; height: 100%; }

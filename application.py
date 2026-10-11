@@ -5,6 +5,7 @@ from flask import Flask, jsonify, render_template, request
 
 from heatshift.advice import get_message
 from heatshift.cities import CITIES, get_city
+from heatshift.places import PlacesError, find_places
 from heatshift.profiles import PROFILES, get_profile
 from heatshift.schedule import build_schedule
 from heatshift.trip import parse_hours, parse_start, plan_trip
@@ -155,6 +156,20 @@ def trip():
         "city": p["city_key"], "role": p["role"], "lang": p["lang"],
         "date": p["weather"]["date"], "mode": p["weather"]["mode"], **result,
     })
+
+
+@application.get("/api/places")
+def places():
+    a = request.args
+    try:
+        result = find_places(a.get("lat"), a.get("lon"), a.get("radius", 1000))
+    except ValueError as e:
+        raise ApiError(str(e))
+    except PlacesError as e:
+        raise ApiError(str(e), 503)
+    # Never log coordinates.
+    log.info("places radius=%s source=%s count=%s", result["radius_m"], result["source"], result["count"])
+    return jsonify(result)
 
 
 if __name__ == "__main__":
